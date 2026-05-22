@@ -1,0 +1,230 @@
+"use client";
+
+import React, { useState, useRef } from "react";
+import { computeFileHash } from "@/lib/utils";
+
+interface UploadZoneProps {
+  onUploadSuccess: (jobId: string, receiptId: string, imageUrl: string) => void;
+  onUploadError: (error: string) => void;
+}
+
+export default function UploadZone({ onUploadSuccess, onUploadError }: UploadZoneProps) {
+  const [isDragging, setIsDragging] = useState(false);
+  const [status, setStatus] = useState<"idle" | "hashing" | "requesting-url" | "uploading-s3" | "ingesting">("idle");
+  const [progress, setProgress] = useState(0);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragging(false);
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      await processFile(files[0]);
+    }
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      await processFile(files[0]);
+    }
+  };
+
+  const triggerFileInput = () => {
+    fileInputRef.current?.click();
+  };
+
+  const processFile = async (file: File) => {
+    // Validate file type
+    const validTypes = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
+    if (!validTypes.includes(file.type)) {
+      onUploadError("Invalid file type. Please upload a JPEG, PNG, WEBP image or PDF.");
+      return;
+    }
+
+    try {
+      // Step 1: Compute Hash
+      setStatus("hashing");
+      setProgress(20);
+      const fileHash = await computeFileHash(file);
+
+      // Step 2: Get Presigned URL from Backend
+      setStatus("requesting-url");
+      setProgress(40);
+      const urlResponse = await fetch(`/api/v1/receipts/upload-url?filename=${encodeURIComponent(file.name)}`);
+      if (!urlResponse.ok) {
+        throw new Error("Failed to get presigned upload URL from backend.");
+      }
+      
+      const uploadDetails = await urlResponse.json();
+      const { url: uploadUrl, fields, object_key } = uploadDetails;
+
+      // Step 3: Direct Upload to S3/MinIO
+      setStatus("uploading-s3");
+      setProgress(60);
+      
+      const formData = new FormData();
+      Object.entries(fields).forEach(([key, val]) => {
+        formData.append(key, val as string);
+      });
+      formData.append("file", file);
+
+      const s3Response = await fetch(uploadUrl, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!s3Response.ok) {
+        throw new Error("Failed to upload receipt directly to storage.");
+      }
+
+      // Step 4: Notify FastAPI backend (Ingest Receipt)
+      setStatus("ingesting");
+      setProgress(85);
+
+      const ingestResponse = await fetch("/api/v1/receipts/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          object_key: object_key,
+          file_hash: fileHash,
+        }),
+      });
+
+      if (!ingestResponse.ok) {
+        throw new Error("Failed to initiate receipt parsing task.");
+      }
+
+      const result = await ingestResponse.json();
+      setProgress(100);
+      setStatus("idle");
+
+      // Generate a local object URL for instant preview on the client side
+      const previewUrl = URL.createObjectURL(file);
+      
+      // If the backend returned cached results immediately (idempotency match)
+      if (result.status === "completed") {
+        // Trigger a fake completed job so the UI shows results immediately
+        onUploadSuccess("cached", result.receipt_id, previewUrl);
+      } else {
+        // Normal path: stream SSE logs using the returned Celery job_id
+        onUploadSuccess(result.job_id, result.receipt_id, previewUrl);
+      }
+
+    } catch (err: any) {
+      setStatus("idle");
+      setProgress(0);
+      onUploadError(err.message || "An unexpected error occurred during upload.");
+    }
+  };
+
+  return (
+    <div className="w-full max-w-2xl mx-auto">
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        accept="image/jpeg,image/png,image/webp,application/pdf"
+        className="hidden"
+      />
+      
+      <div
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+        onClick={triggerFileInput}
+        className={`relative overflow-hidden cursor-pointer group rounded-2xl border-2 border-dashed p-12 text-center transition-all duration-300 backdrop-blur-md ${
+          isDragging
+            ? "border-cyan-400 bg-cyan-950/20 shadow-[0_0_25px_rgba(34,211,238,0.15)]Scale-102"
+            : "border-slate-700 bg-slate-900/40 hover:border-slate-500 hover:bg-slate-800/20"
+        } ${status !== "idle" ? "pointer-events-none" : ""}`}
+      >
+        {/* Decorative Grid Effect */}
+        <div className="absolute inset-0 opacity-10 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"></div>
+        
+        {/* Glow Element */}
+        <div className="absolute -inset-1 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 opacity-0 blur transition duration-500 group-hover:opacity-10 group-hover:duration-200"></div>
+
+        <div className="relative space-y-6">
+          {status === "idle" ? (
+            <>
+              {/* Cloud Upload Icon */}
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-800/80 border border-slate-700 text-cyan-400 group-hover:scale-110 group-hover:text-cyan-300 transition-all duration-300">
+                <svg
+                  className="h-8 w-8"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+                  />
+                </svg>
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-xl font-medium text-slate-100">
+                  Drag and drop your receipt image here
+                </p>
+                <p className="text-sm text-slate-400">
+                  or <span className="text-cyan-400 font-semibold group-hover:text-cyan-300 underline">browse your files</span>
+                </p>
+                <p className="text-xs text-slate-500 mt-2">
+                  Supports JPEG, PNG, WEBP, and PDF (up to 10MB)
+                </p>
+              </div>
+            </>
+          ) : (
+            <div className="space-y-6 py-4">
+              {/* Spinner */}
+              <div className="mx-auto flex h-16 w-16 items-center justify-center">
+                <div className="relative w-12 h-12">
+                  <div className="absolute inset-0 rounded-full border-4 border-slate-800"></div>
+                  <div className="absolute inset-0 rounded-full border-4 border-t-cyan-400 animate-spin"></div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <h3 className="text-lg font-semibold text-slate-200">
+                  {status === "hashing" && "Analyzing file integrity..."}
+                  {status === "requesting-url" && "Requesting upload credentials..."}
+                  {status === "uploading-s3" && "Uploading directly to S3..."}
+                  {status === "ingesting" && "Triggering backend parser..."}
+                </h3>
+                <p className="text-xs text-slate-500 font-mono">
+                  {status === "hashing" && "Generating SHA-256 fingerprint"}
+                  {status === "requesting-url" && "Resolving secure token"}
+                  {status === "uploading-s3" && "Transmitting payload"}
+                  {status === "ingesting" && "Registering process ID"}
+                </p>
+              </div>
+
+              {/* Progress Bar */}
+              <div className="w-full max-w-xs mx-auto bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                <div
+                  className="bg-gradient-to-r from-cyan-500 to-blue-600 h-1.5 rounded-full transition-all duration-300 ease-out"
+                  style={{ width: `${progress}%` }}
+                ></div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
