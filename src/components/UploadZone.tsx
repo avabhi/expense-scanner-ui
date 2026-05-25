@@ -2,6 +2,7 @@
 
 import React, { useState, useRef } from "react";
 import { computeFileHash } from "@/lib/utils";
+import { fetchWithAuth } from "@/lib/auth";
 
 interface UploadZoneProps {
   onUploadSuccess: (jobId: string, receiptId: string, imageUrl: string) => void;
@@ -61,7 +62,7 @@ export default function UploadZone({ onUploadSuccess, onUploadError }: UploadZon
       // Step 2: Get Presigned URL from Backend
       setStatus("requesting-url");
       setProgress(40);
-      const urlResponse = await fetch(`/api/v1/receipts/upload-url?filename=${encodeURIComponent(file.name)}`);
+      const urlResponse = await fetchWithAuth(`/api/v1/receipts/upload-url?filename=${encodeURIComponent(file.name)}`);
       if (!urlResponse.ok) {
         throw new Error("Failed to get presigned upload URL from backend.");
       }
@@ -92,7 +93,7 @@ export default function UploadZone({ onUploadSuccess, onUploadError }: UploadZon
       setStatus("ingesting");
       setProgress(85);
 
-      const ingestResponse = await fetch("/api/v1/receipts/", {
+      const ingestResponse = await fetchWithAuth("/api/v1/receipts", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

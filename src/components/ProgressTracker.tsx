@@ -27,8 +27,8 @@ export default function ProgressTracker({ jobId, onComplete, onFailure }: Progre
       return;
     }
 
-    // Connect to FastAPI SSE stream (which is rewritten to http://localhost:8000/api/v1/receipts/status/{jobId})
-    const eventSource = new EventSource(`/api/v1/receipts/status/${jobId}`);
+    // Connect directly to FastAPI SSE stream (bypassing Next.js proxy buffering)
+    const eventSource = new EventSource(`http://localhost:8000/api/v1/receipts/status/${jobId}`);
 
     eventSource.onmessage = (event) => {
       try {

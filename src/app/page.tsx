@@ -1,11 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import { useSession, signOut } from "next-auth/react";
 import UploadZone from "@/components/UploadZone";
 import ProgressTracker from "@/components/ProgressTracker";
 import ReceiptResult from "@/components/ReceiptResult";
 
 export default function Home() {
+  const { data: session } = useSession();
   const [step, setStep] = useState<"upload" | "processing" | "result">("upload");
   const [jobId, setJobId] = useState<string>("");
   const [receiptId, setReceiptId] = useState<string>("");
@@ -71,6 +74,42 @@ export default function Home() {
           </div>
           
           <div className="flex items-center space-x-4 text-xs font-mono text-slate-400">
+            <Link
+              href="/categories"
+              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-slate-800/60 border border-slate-700 hover:border-cyan-500/40 hover:text-cyan-400 transition duration-200"
+            >
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+              <span>Categories</span>
+            </Link>
+
+            {session?.user && (
+              <div className="flex items-center space-x-3 bg-slate-900 border border-slate-800 pl-3 pr-1 py-1 rounded-xl">
+                <span className="text-slate-300 font-semibold text-[11px] max-w-[100px] truncate">
+                  {session.user.name || session.user.email}
+                </span>
+                {session.user.image ? (
+                  <img
+                    src={session.user.image}
+                    alt="User avatar"
+                    className="h-6 w-6 rounded-full border border-slate-700"
+                  />
+                ) : (
+                  <div className="h-6 w-6 rounded-full bg-slate-800 flex items-center justify-center border border-slate-700 text-[10px] text-cyan-400 font-bold">
+                    {session.user.name ? session.user.name[0].toUpperCase() : "U"}
+                  </div>
+                )}
+                <button
+                  onClick={() => signOut({ callbackUrl: "/" })}
+                  className="px-2.5 py-1 rounded bg-red-950/30 hover:bg-red-950/60 border border-red-900/30 hover:border-red-900/60 text-[10px] font-bold text-red-400 transition cursor-pointer"
+                  title="Sign Out"
+                >
+                  Sign Out
+                </button>
+              </div>
+            )}
+
             <span className="flex items-center space-x-1.5">
               <span className="h-2 w-2 rounded-full bg-green-500"></span>
               <span>Worker: connected</span>
