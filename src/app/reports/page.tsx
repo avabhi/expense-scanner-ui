@@ -12,10 +12,6 @@ import {
   TrendingUp,
   Download,
   AlertCircle,
-  Clock,
-  PieChart,
-  BarChart3,
-  Coins,
   ShoppingBag,
   Car,
   Plane,
@@ -23,9 +19,7 @@ import {
   Briefcase,
   Database,
   Coffee,
-  Receipt,
-  CheckCircle,
-  DollarSign,
+  Coins,
 } from "lucide-react";
 import { Doughnut, Line } from "react-chartjs-2";
 import {
@@ -69,12 +63,18 @@ interface CategorySummary {
   receipts: ReceiptRef[];
 }
 
-interface MerchantMetric {
-  merchant: string;
-  amount: number;
-  count: number;
-  category: string;
-}
+const CATEGORY_ICONS: Record<string, any> = {
+  "Food & Dining": Coffee,
+  "Groceries": ShoppingBag,
+  "Transport": Car,
+  "Travel": Plane,
+  "Travel & Lodging": Plane,
+  "Lodging": Hotel,
+  "Office Supplies": Briefcase,
+  "Software / SaaS": Database,
+  "Cloud Infrastructure": Database,
+  "Other": Coins,
+};
 
 // Colour palette aligned with ReceiptResult badges
 const CATEGORY_COLORS: Record<string, string> = {
@@ -154,8 +154,8 @@ export default function ReportsPage() {
           backgroundColor: summaries.map(
             (c) => CATEGORY_COLORS[c.category] || "#64748b"
           ),
-          borderColor: "#020617", // slate-950
-          borderWidth: 3,
+          borderColor: "rgba(255, 255, 255, 0.05)",
+          borderWidth: 2,
           hoverOffset: 6,
         },
       ],
@@ -213,7 +213,7 @@ export default function ReportsPage() {
       .sort((a, b) => (b.total_amount || 0) - (a.total_amount || 0));
   }, [receipts]);
 
-  // Trend Analysis Data
+  // Trend Analysis Data (Using primary corporate blue)
   const trendLabels = ["Week 1", "Week 2", "Week 3", "Week 4", "Week 5", "Week 6"];
   const trendValues = [120, 340, 240, 560, 480, totalSpent || 1240];
   const previousTrendValues = [90, 280, 210, 430, 410, 890];
@@ -225,19 +225,21 @@ export default function ReportsPage() {
         fill: true,
         label: "Current Period",
         data: trendValues,
-        borderColor: "#06b6d4", // cyan-500
-        backgroundColor: "rgba(6, 182, 212, 0.05)",
+        borderColor: "#1a56db", // Stitch primary blue
+        backgroundColor: "rgba(26, 86, 219, 0.05)",
         tension: 0.35,
-        pointBackgroundColor: "#06b6d4",
+        pointBackgroundColor: "#1a56db",
+        pointBorderColor: "#ffffff",
       },
       {
         fill: false,
         label: "Previous Period",
         data: previousTrendValues,
-        borderColor: "#64748b", // slate-500
+        borderColor: "#94a3b8", // slate-400
         borderDash: [5, 5],
         tension: 0.35,
-        pointBackgroundColor: "#64748b",
+        pointBackgroundColor: "#94a3b8",
+        pointBorderColor: "#ffffff",
       },
     ],
   };
@@ -259,11 +261,11 @@ export default function ReportsPage() {
     scales: {
       x: {
         grid: { display: false },
-        ticks: { color: "#64748b", font: { size: 10 } },
+        ticks: { color: "#64748b", font: { size: 10, weight: "bold" } },
       },
       y: {
         grid: { color: "rgba(148, 163, 184, 0.05)" },
-        ticks: { color: "#64748b", font: { size: 10 } },
+        ticks: { color: "#64748b", font: { size: 10, weight: "bold" } },
       },
     },
   };
@@ -272,19 +274,19 @@ export default function ReportsPage() {
     <AppLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
           <div>
-            <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-slate-100 via-slate-100 to-cyan-400 bg-clip-text text-transparent">
+            <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-foreground via-foreground to-primary bg-clip-text text-transparent">
               Financial Performance
             </h1>
-            <p className="text-slate-400 text-sm mt-1">
+            <p className="text-muted-foreground text-sm mt-1">
               Real-time spend analysis and budget progress audit.
             </p>
           </div>
           <Button
             variant="outline"
             size="sm"
-            className="border-slate-800 bg-slate-900 hover:bg-slate-800 text-slate-300 font-bold self-start sm:self-auto cursor-pointer"
+            className="border-border bg-card hover:bg-muted text-foreground font-bold self-start sm:self-auto cursor-pointer"
           >
             <Download className="h-4 w-4 mr-2" />
             <span>Export Report</span>
@@ -294,15 +296,15 @@ export default function ReportsPage() {
         {loading && (
           <div className="flex flex-col items-center justify-center py-24 space-y-3">
             <div className="relative w-10 h-10">
-              <div className="absolute inset-0 rounded-full border-4 border-slate-800" />
-              <div className="absolute inset-0 rounded-full border-4 border-t-cyan-400 animate-spin" />
+              <div className="absolute inset-0 rounded-full border-4 border-muted" />
+              <div className="absolute inset-0 rounded-full border-4 border-t-primary animate-spin" />
             </div>
-            <p className="text-slate-500 font-mono text-xs">Compiling financial metrics...</p>
+            <p className="text-muted-foreground font-mono text-xs">Compiling financial metrics...</p>
           </div>
         )}
 
         {error && (
-          <div className="p-4 rounded-xl border border-red-500/20 bg-red-950/10 text-red-400 text-center flex items-center justify-center gap-2">
+          <div className="p-4 rounded-xl border border-red-500/20 bg-red-500/5 text-red-500 text-center flex items-center justify-center gap-2">
             <AlertCircle className="h-5 w-5" />
             <span className="text-sm font-semibold">{error}</span>
           </div>
@@ -313,10 +315,10 @@ export default function ReportsPage() {
             {/* Donut Chart & Trend Line Chart */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
               {/* Donut breakdown */}
-              <Card className="lg:col-span-5 bg-slate-900/40 border-slate-800 backdrop-blur-xl">
+              <Card className="lg:col-span-5 bg-card border-border">
                 <CardHeader>
-                  <CardTitle className="text-base font-bold text-slate-200">Spending Breakdown</CardTitle>
-                  <CardDescription className="text-slate-500 text-xs">
+                  <CardTitle className="text-base font-bold text-foreground">Spending Breakdown</CardTitle>
+                  <CardDescription className="text-muted-foreground text-xs">
                     Division across category labels
                   </CardDescription>
                 </CardHeader>
@@ -324,8 +326,8 @@ export default function ReportsPage() {
                   <div className="relative w-[200px] h-[200px] flex items-center justify-center">
                     <Doughnut data={donutChartData} options={donutOptions as any} />
                     <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                      <p className="text-[10px] text-slate-500 font-mono uppercase tracking-wider">Spent</p>
-                      <p className="text-xl font-black text-cyan-400 font-mono mt-0.5">
+                      <p className="text-[10px] text-muted-foreground font-mono uppercase tracking-wider">Spent</p>
+                      <p className="text-xl font-black text-primary font-mono mt-0.5">
                         ${totalSpent.toLocaleString("en-US", { maximumFractionDigits: 0 })}
                       </p>
                     </div>
@@ -338,8 +340,8 @@ export default function ReportsPage() {
                       return (
                         <div key={c.category} className="flex items-center gap-1.5 min-w-0">
                           <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: col }} />
-                          <span className="text-slate-400 truncate max-w-[100px]">{c.category}</span>
-                          <span className="text-slate-500 font-mono font-bold ml-auto">{pct}%</span>
+                          <span className="text-muted-foreground truncate max-w-[100px] font-semibold">{c.category}</span>
+                          <span className="text-muted-foreground font-mono font-bold ml-auto">{pct}%</span>
                         </div>
                       );
                     })}
@@ -348,15 +350,15 @@ export default function ReportsPage() {
               </Card>
 
               {/* Trend Chart */}
-              <Card className="lg:col-span-7 bg-slate-900/40 border-slate-800 backdrop-blur-xl">
+              <Card className="lg:col-span-7 bg-card border-border">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <div>
-                    <CardTitle className="text-base font-bold text-slate-200">Trend Analysis</CardTitle>
-                    <CardDescription className="text-slate-500 text-xs">
+                    <CardTitle className="text-base font-bold text-foreground">Trend Analysis</CardTitle>
+                    <CardDescription className="text-muted-foreground text-xs">
                       Comparison of spend metrics vs last month
                     </CardDescription>
                   </div>
-                  <Badge className="bg-cyan-500/10 hover:bg-cyan-500/10 text-cyan-400 border-none font-bold text-[10px] py-1 px-2">
+                  <Badge className="bg-primary/10 hover:bg-primary/10 text-primary border-none font-bold text-[10px] py-1 px-2 rounded-full">
                     +12.4% vs last period
                   </Badge>
                 </CardHeader>
@@ -369,34 +371,34 @@ export default function ReportsPage() {
             {/* Top Merchants & Budget progress */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Top Merchants */}
-              <Card className="bg-slate-900/40 border-slate-800 backdrop-blur-xl">
+              <Card className="bg-card border-border">
                 <CardHeader>
-                  <CardTitle className="text-base font-bold text-slate-200">Top Merchants</CardTitle>
-                  <CardDescription className="text-slate-500 text-xs">
+                  <CardTitle className="text-base font-bold text-foreground">Top Merchants</CardTitle>
+                  <CardDescription className="text-muted-foreground text-xs">
                     Suppliers with the highest spending velocity
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {topMerchants.length === 0 ? (
-                    <p className="text-xs text-slate-500 py-6 text-center">No merchant transactions tracked yet.</p>
+                    <p className="text-xs text-muted-foreground py-6 text-center">No merchant transactions tracked yet.</p>
                   ) : (
                     topMerchants.map((m) => (
                       <div
                         key={m.merchant}
-                        className="flex items-center justify-between p-3.5 bg-slate-950/20 border border-slate-900 hover:bg-slate-900/20 rounded-xl transition group cursor-pointer"
+                        className="flex items-center justify-between p-3.5 bg-muted/20 border border-border hover:bg-muted/10 rounded-xl transition group cursor-pointer"
                       >
                         <div className="flex items-center gap-3">
-                          <div className="h-9 w-9 rounded-full bg-cyan-950/20 border border-cyan-900/20 flex items-center justify-center text-cyan-400">
+                          <div className="h-9 w-9 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
                             <ShoppingBag className="h-4.5 w-4.5" />
                           </div>
                           <div>
-                            <p className="text-xs font-bold text-slate-200">{m.merchant}</p>
-                            <p className="text-[10px] text-slate-500 font-mono mt-0.5">{m.count} Transactions · {m.category}</p>
+                            <p className="text-xs font-bold text-foreground">{m.merchant}</p>
+                            <p className="text-[10px] text-muted-foreground font-mono mt-0.5">{m.count} Transactions · {m.category}</p>
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className="text-xs font-black text-slate-200 font-mono">${m.amount.toFixed(2)}</p>
-                          <Badge className="bg-cyan-500/10 hover:bg-cyan-500/10 text-cyan-400 border-none font-bold text-[9px] px-1.5 py-0.2 mt-0.5">
+                          <p className="text-xs font-black text-foreground font-mono">${m.amount.toFixed(2)}</p>
+                          <Badge className="bg-primary/10 hover:bg-primary/10 text-primary border-none font-bold text-[9px] px-1.5 py-0.2 mt-0.5 rounded-full">
                             Verified
                           </Badge>
                         </div>
@@ -407,10 +409,10 @@ export default function ReportsPage() {
               </Card>
 
               {/* Budget Progress */}
-              <Card className="bg-slate-900/40 border-slate-800 backdrop-blur-xl">
+              <Card className="bg-card border-border">
                 <CardHeader>
-                  <CardTitle className="text-base font-bold text-slate-200">Budget Progress</CardTitle>
-                  <CardDescription className="text-slate-500 text-xs">
+                  <CardTitle className="text-base font-bold text-foreground">Budget Progress</CardTitle>
+                  <CardDescription className="text-muted-foreground text-xs">
                     Target limits grouped by categories
                   </CardDescription>
                 </CardHeader>
@@ -425,21 +427,21 @@ export default function ReportsPage() {
                       <div key={c.category} className="space-y-1.5">
                         <div className="flex justify-between items-end text-xs">
                           <div>
-                            <p className="font-bold text-slate-300">{c.category}</p>
+                            <p className="font-bold text-foreground">{c.category}</p>
                           </div>
-                          <p className="font-mono text-slate-400 font-bold">
-                            <span className={isExceeded ? "text-red-400" : "text-slate-200"}>
+                          <p className="font-mono text-muted-foreground font-bold">
+                            <span className={isExceeded ? "text-red-500" : "text-foreground"}>
                               ${val.toFixed(0)}
                             </span>{" "}
-                            / <span className="text-slate-600">${budget}</span>
+                            / <span className="text-muted-foreground/60">${budget}</span>
                           </p>
                         </div>
                         <Progress
                           value={pct}
-                          className={`h-1.5 ${isExceeded ? "bg-red-950/20" : "bg-slate-800"}`}
+                          className={`h-1.5 ${isExceeded ? "bg-red-500/10" : "bg-muted"}`}
                         />
                         {isExceeded && (
-                          <p className="text-[10px] text-red-400 font-bold font-mono">
+                          <p className="text-[10px] text-red-500 font-bold font-mono">
                             Exceeded by ${(val - budget).toFixed(2)}
                           </p>
                         )}
@@ -451,61 +453,61 @@ export default function ReportsPage() {
             </div>
 
             {/* Recent Large Transactions Table */}
-            <Card className="bg-slate-900/40 border-slate-800 backdrop-blur-xl">
+            <Card className="bg-card border-border">
               <CardHeader>
-                <CardTitle className="text-base font-bold text-slate-200">Recent Large Transactions</CardTitle>
-                <CardDescription className="text-slate-500 text-xs">
+                <CardTitle className="text-base font-bold text-foreground">Recent Large Transactions</CardTitle>
+                <CardDescription className="text-muted-foreground text-xs">
                   Scanned items with values exceeding $100.00
                 </CardDescription>
               </CardHeader>
               <CardContent className="pt-2">
                 {largeTransactions.length === 0 ? (
-                  <p className="text-xs text-slate-500 py-6 text-center">No transaction exceeds $100.00 yet.</p>
+                  <p className="text-xs text-muted-foreground py-6 text-center">No transaction exceeds $100.00 yet.</p>
                 ) : (
-                  <div className="overflow-x-auto border border-slate-900 rounded-xl">
+                  <div className="overflow-x-auto border border-border rounded-xl">
                     <Table>
-                      <TableHeader className="bg-slate-950/40 border-b border-slate-900">
-                        <TableRow className="border-slate-900 hover:bg-transparent">
-                          <TableHead className="text-slate-500 font-bold text-[10px] uppercase tracking-wider py-4 pl-6">
+                      <TableHeader className="bg-muted/20 border-b border-border">
+                        <TableRow className="border-border hover:bg-transparent">
+                          <TableHead className="text-muted-foreground font-bold text-[10px] uppercase tracking-wider py-4 pl-6">
                             Transaction ID
                           </TableHead>
-                          <TableHead className="text-slate-500 font-bold text-[10px] uppercase tracking-wider py-4">
+                          <TableHead className="text-muted-foreground font-bold text-[10px] uppercase tracking-wider py-4">
                             Merchant
                           </TableHead>
-                          <TableHead className="text-slate-500 font-bold text-[10px] uppercase tracking-wider py-4">
+                          <TableHead className="text-muted-foreground font-bold text-[10px] uppercase tracking-wider py-4">
                             Category
                           </TableHead>
-                          <TableHead className="text-slate-500 font-bold text-[10px] uppercase tracking-wider py-4 text-center">
+                          <TableHead className="text-muted-foreground font-bold text-[10px] uppercase tracking-wider py-4 text-center">
                             Status
                           </TableHead>
-                          <TableHead className="text-slate-500 font-bold text-[10px] uppercase tracking-wider py-4 text-right pr-6">
+                          <TableHead className="text-muted-foreground font-bold text-[10px] uppercase tracking-wider py-4 text-right pr-6">
                             Amount
                           </TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {largeTransactions.slice(0, 5).map((t) => (
-                          <TableRow key={t.receipt_id} className="border-slate-900 hover:bg-slate-900/20 transition">
-                            <TableCell className="py-4 font-mono text-[10px] font-bold text-cyan-500 pl-6">
+                          <TableRow key={t.receipt_id} className="border-border hover:bg-muted/10 transition">
+                            <TableCell className="py-4 font-mono text-[10px] font-bold text-primary pl-6">
                               #{t.receipt_id.slice(0, 8)}
                             </TableCell>
-                            <TableCell className="py-4 font-bold text-slate-200 text-xs">
+                            <TableCell className="py-4 font-bold text-foreground text-xs">
                               {t.merchant_name || "Unknown Merchant"}
                             </TableCell>
                             <TableCell className="py-4">
                               <Badge
                                 variant="outline"
-                                className="text-[10px] px-2 py-0.5 rounded-full border-slate-800 bg-slate-900/30 text-slate-400"
+                                className="text-[10px] px-2 py-0.5 rounded-full border-border bg-muted/30 text-muted-foreground"
                               >
                                 {t.category || "Other"}
                               </Badge>
                             </TableCell>
                             <TableCell className="py-4 text-center">
-                              <Badge className="bg-emerald-500/10 hover:bg-emerald-500/10 text-emerald-400 border-none font-bold text-[10px] rounded-full px-2.5 py-0.5">
+                              <Badge className="bg-emerald-500/10 hover:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-none font-bold text-[10px] rounded-full px-2.5 py-0.5">
                                 Verified
                               </Badge>
                             </TableCell>
-                            <TableCell className="py-4 text-right font-black font-mono text-slate-200 text-xs pr-6">
+                            <TableCell className="py-4 text-right font-black font-mono text-foreground text-xs pr-6">
                               ${(t.total_amount || 0).toFixed(2)}
                             </TableCell>
                           </TableRow>

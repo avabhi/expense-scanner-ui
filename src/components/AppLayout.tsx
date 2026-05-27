@@ -10,7 +10,6 @@ import {
   History,
   BarChart3,
   Tag,
-  Settings,
   Bell,
   HelpCircle,
   Menu,
@@ -40,21 +39,21 @@ export default function AppLayout({ children }: AppLayoutProps) {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex selection:bg-cyan-500/30 selection:text-cyan-200">
+    <div className="min-h-screen bg-background text-foreground flex selection:bg-primary/20 selection:text-primary">
       {/* Background Decorative Gradients */}
-      <div className="absolute top-0 left-0 right-0 h-[500px] bg-gradient-to-b from-cyan-900/10 via-blue-950/5 to-transparent pointer-events-none select-none z-0"></div>
+      <div className="absolute top-0 left-0 right-0 h-[500px] bg-gradient-to-b from-primary/5 via-primary/[0.01] to-transparent pointer-events-none select-none z-0"></div>
 
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex fixed left-0 top-0 h-full w-[260px] bg-slate-950/80 backdrop-blur-xl border-r border-slate-900 flex-col z-40">
+      <aside className="hidden lg:flex fixed left-0 top-0 h-full w-[260px] bg-sidebar border-r border-sidebar-border flex-col z-40">
         <div className="px-6 py-6 flex items-center space-x-3">
-          <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
-            <svg className="h-5 w-5 text-slate-950 font-bold" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
+          <div className="h-9 w-9 rounded-lg bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
+            <svg className="h-5 w-5 text-primary-foreground font-bold" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
             </svg>
           </div>
           <div>
-            <span className="font-extrabold text-base tracking-wider text-slate-100 block leading-tight">EXPENSEAI</span>
-            <span className="text-[9px] font-mono text-cyan-400 font-semibold tracking-widest uppercase">
+            <span className="font-extrabold text-base tracking-wider text-sidebar-foreground block leading-tight">EXPENSEAI</span>
+            <span className="text-[9px] font-mono text-primary font-semibold tracking-widest uppercase">
               Vision OCR Agent
             </span>
           </div>
@@ -68,23 +67,23 @@ export default function AppLayout({ children }: AppLayoutProps) {
               <Link
                 key={item.name}
                 href={item.href}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition duration-200 group font-medium text-sm ${
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition duration-200 group font-semibold text-xs uppercase tracking-wider ${
                   isActive
-                    ? "bg-gradient-to-r from-cyan-500/10 to-blue-600/10 border-l-2 border-cyan-400 text-cyan-400 bg-slate-900/50"
-                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/40"
+                    ? "bg-sidebar-accent text-primary border-l-2 border-primary font-bold shadow-sm"
+                    : "text-sidebar-foreground/75 hover:text-sidebar-foreground hover:bg-sidebar-accent/60"
                 }`}
               >
-                <Icon className={`h-4 w-4 transition duration-200 ${isActive ? "text-cyan-400" : "text-slate-500 group-hover:text-slate-300"}`} />
+                <Icon className={`h-4 w-4 transition duration-200 ${isActive ? "text-primary" : "text-sidebar-foreground/50 group-hover:text-sidebar-foreground/80"}`} />
                 <span>{item.name}</span>
               </Link>
             );
           })}
         </nav>
 
-        <div className="p-4 border-t border-slate-900">
+        <div className="p-4 border-t border-sidebar-border">
           <Button
             onClick={() => router.push("/")}
-            className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold py-2.5 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-cyan-500/10 cursor-pointer"
+            className="w-full bg-primary hover:bg-primary/95 text-primary-foreground font-bold py-2.5 rounded-xl flex items-center justify-center gap-2 shadow-md cursor-pointer"
           >
             <Upload className="h-4 w-4" />
             <span>Upload Receipt</span>
@@ -95,19 +94,19 @@ export default function AppLayout({ children }: AppLayoutProps) {
       {/* Mobile Drawer (Overlay and Menu) */}
       {mobileMenuOpen && (
         <div className="fixed inset-0 z-50 flex lg:hidden">
-          <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={() => setMobileMenuOpen(false)}></div>
-          <div className="relative flex w-full max-w-xs flex-1 flex-col bg-slate-950 border-r border-slate-900 pt-5 pb-4 z-50">
+          <div className="fixed inset-0 bg-background/80 backdrop-blur-sm" onClick={() => setMobileMenuOpen(false)}></div>
+          <div className="relative flex w-full max-w-xs flex-1 flex-col bg-sidebar border-r border-sidebar-border pt-5 pb-4 z-50">
             <div className="absolute top-0 right-0 -mr-12 pt-2">
               <button
                 type="button"
-                className="ml-1 flex h-10 w-10 items-center justify-center rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
+                className="ml-1 flex h-10 w-10 items-center justify-center rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-foreground"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                <X className="h-6 w-6 text-white" />
+                <X className="h-6 w-6 text-sidebar-foreground" />
               </button>
             </div>
             <div className="flex flex-shrink-0 items-center px-6">
-              <span className="font-extrabold text-base tracking-wider text-slate-100">EXPENSEAI</span>
+              <span className="font-extrabold text-base tracking-wider text-sidebar-foreground">EXPENSEAI</span>
             </div>
             <nav className="mt-8 flex-1 space-y-1 px-4">
               {navigation.map((item) => {
@@ -118,10 +117,10 @@ export default function AppLayout({ children }: AppLayoutProps) {
                     key={item.name}
                     href={item.href}
                     onClick={() => setMobileMenuOpen(false)}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition duration-200 font-medium text-sm ${
+                    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition duration-200 font-semibold text-xs uppercase tracking-wider ${
                       isActive
-                        ? "bg-slate-900/80 border-l-2 border-cyan-400 text-cyan-400"
-                        : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/40"
+                        ? "bg-sidebar-accent border-l-2 border-primary text-primary font-bold"
+                        : "text-sidebar-foreground/75 hover:text-sidebar-foreground hover:bg-sidebar-accent/60"
                     }`}
                   >
                     <Icon className="h-4 w-4" />
@@ -130,13 +129,13 @@ export default function AppLayout({ children }: AppLayoutProps) {
                 );
               })}
             </nav>
-            <div className="p-4 border-t border-slate-900">
+            <div className="p-4 border-t border-sidebar-border">
               <Button
                 onClick={() => {
                   setMobileMenuOpen(false);
                   router.push("/");
                 }}
-                className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold py-2.5 rounded-xl flex items-center justify-center gap-2"
+                className="w-full bg-primary text-primary-foreground font-bold py-2.5 rounded-xl flex items-center justify-center gap-2"
               >
                 <Upload className="h-4 w-4" />
                 <span>Upload Receipt</span>
@@ -149,11 +148,11 @@ export default function AppLayout({ children }: AppLayoutProps) {
       {/* Main Viewport Container */}
       <div className="flex-1 flex flex-col min-h-screen lg:ml-[260px] z-10 relative">
         {/* Top Header */}
-        <header className="h-16 bg-slate-950/60 backdrop-blur-md border-b border-slate-900/80 flex justify-between items-center px-6 sticky top-0 z-30">
+        <header className="h-16 bg-sidebar/80 backdrop-blur-md border-b border-sidebar-border flex justify-between items-center px-6 sticky top-0 z-30">
           {/* Mobile hamburger menu toggle */}
           <button
             type="button"
-            className="lg:hidden p-2 text-slate-400 hover:text-slate-200"
+            className="lg:hidden p-2 text-sidebar-foreground/70 hover:text-sidebar-foreground"
             onClick={() => setMobileMenuOpen(true)}
           >
             <Menu className="h-5 w-5" />
@@ -162,7 +161,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
           {/* Search bar placeholder */}
           <div className="hidden md:flex flex-1 max-w-md items-center relative">
             <svg
-              className="h-4 w-4 text-slate-500 absolute left-3 pointer-events-none"
+              className="h-4 w-4 text-sidebar-foreground/50 absolute left-3 pointer-events-none"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -173,60 +172,60 @@ export default function AppLayout({ children }: AppLayoutProps) {
             <input
               type="text"
               placeholder="Search expenses, merchants, categories..."
-              className="w-full bg-slate-900/60 border border-slate-800 focus:border-cyan-500/50 text-slate-200 text-xs rounded-full pl-9 pr-4 py-1.5 focus:ring-1 focus:ring-cyan-500/20 outline-none transition-all placeholder-slate-500"
+              className="w-full bg-background border border-sidebar-border focus:border-primary/50 text-foreground text-xs rounded-full pl-9 pr-4 py-1.5 focus:ring-1 focus:ring-primary/20 outline-none transition-all placeholder-sidebar-foreground/40"
             />
           </div>
 
           {/* Right Header Navigation */}
           <div className="flex items-center space-x-4">
-            <button className="p-1.5 text-slate-500 hover:text-slate-300 transition hover:bg-slate-900 rounded-full relative">
+            <button className="p-1.5 text-sidebar-foreground/60 hover:text-sidebar-foreground transition hover:bg-sidebar-accent rounded-full relative">
               <Bell className="h-4.5 w-4.5" />
-              <span className="absolute top-1 right-1 h-1.5 w-1.5 bg-cyan-400 rounded-full"></span>
+              <span className="absolute top-1 right-1 h-1.5 w-1.5 bg-primary rounded-full"></span>
             </button>
-            <button className="p-1.5 text-slate-500 hover:text-slate-300 transition hover:bg-slate-900 rounded-full">
+            <button className="p-1.5 text-sidebar-foreground/60 hover:text-sidebar-foreground transition hover:bg-sidebar-accent rounded-full">
               <HelpCircle className="h-4.5 w-4.5" />
             </button>
 
-            <span className="h-5 w-px bg-slate-900"></span>
+            <span className="h-5 w-px bg-sidebar-border"></span>
 
             {/* Profile Dropdown */}
             {session?.user && (
               <div className="relative">
                 <button
                   onClick={() => setProfileOpen(!profileOpen)}
-                  className="flex items-center space-x-2.5 p-1 rounded-xl hover:bg-slate-900 transition text-left cursor-pointer"
+                  className="flex items-center space-x-2.5 p-1 rounded-xl hover:bg-sidebar-accent transition text-left cursor-pointer"
                 >
                   {session.user.image ? (
                     <img
                       src={session.user.image}
                       alt="User avatar"
-                      className="h-7 w-7 rounded-full border border-slate-800 object-cover"
+                      className="h-7 w-7 rounded-full border border-sidebar-border object-cover"
                     />
                   ) : (
-                    <div className="h-7 w-7 rounded-full bg-gradient-to-br from-cyan-400/20 to-blue-600/20 border border-cyan-500/20 flex items-center justify-center text-[10px] text-cyan-400 font-black">
+                    <div className="h-7 w-7 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 border border-primary/20 flex items-center justify-center text-[10px] text-primary font-black">
                       {session.user.name ? session.user.name[0].toUpperCase() : "U"}
                     </div>
                   )}
-                  <span className="hidden sm:inline text-xs text-slate-300 font-semibold truncate max-w-[120px]">
+                  <span className="hidden sm:inline text-xs text-sidebar-foreground font-semibold truncate max-w-[120px]">
                     {session.user.name || session.user.email}
                   </span>
-                  <ChevronDown className="hidden sm:inline h-3 w-3 text-slate-500" />
+                  <ChevronDown className="hidden sm:inline h-3 w-3 text-sidebar-foreground/50" />
                 </button>
 
                 {profileOpen && (
                   <>
                     <div className="fixed inset-0 z-40" onClick={() => setProfileOpen(false)}></div>
-                    <div className="absolute right-0 mt-2 w-52 bg-slate-900 border border-slate-800 rounded-2xl p-1.5 shadow-2xl z-50 animate-fade-in">
-                      <div className="px-3 py-2 border-b border-slate-800/60 mb-1">
-                        <p className="text-xs font-bold text-slate-200 truncate">{session.user.name}</p>
-                        <p className="text-[10px] text-slate-500 font-mono truncate">{session.user.email}</p>
+                    <div className="absolute right-0 mt-2 w-52 bg-sidebar border border-sidebar-border rounded-2xl p-1.5 shadow-2xl z-50 animate-fade-in">
+                      <div className="px-3 py-2 border-b border-sidebar-border mb-1">
+                        <p className="text-xs font-bold text-sidebar-foreground truncate">{session.user.name}</p>
+                        <p className="text-[10px] text-sidebar-foreground/60 font-mono truncate">{session.user.email}</p>
                       </div>
                       <button
                         onClick={() => {
                           setProfileOpen(false);
                           signOut({ callbackUrl: "/" });
                         }}
-                        className="w-full flex items-center space-x-2.5 px-3 py-2 text-xs font-bold text-red-400 hover:text-red-300 hover:bg-red-950/20 rounded-xl transition text-left"
+                        className="w-full flex items-center space-x-2.5 px-3 py-2 text-xs font-bold text-red-500 hover:text-red-600 hover:bg-red-50/10 rounded-xl transition text-left"
                       >
                         <LogOut className="h-4.5 w-4.5" />
                         <span>Sign Out</span>

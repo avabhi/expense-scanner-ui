@@ -32,15 +32,14 @@ import {
   AlertCircle,
   Clock,
   ArrowRight,
-  TrendingDown,
   ShoppingBag,
   Briefcase,
   Plane,
   Car,
   Hotel,
   Coffee,
-  Database,
   Coins,
+  Database,
 } from "lucide-react";
 import {
   Chart as ChartJS,
@@ -122,7 +121,6 @@ export default function Dashboard() {
               uniqueReceiptsMap[r.receipt_id] = {
                 ...r,
                 category: catSummary.category,
-                // Since summary returns completed receipts, set status to verified
                 status: "completed",
               };
             }
@@ -149,7 +147,6 @@ export default function Dashboard() {
   const totalSpent = summaries.reduce((s, c) => s + c.total_spent, 0);
 
   // Compile timeline data for the trend chart
-  // Group receipts by date (Y-M-D) or just show recent days
   const dateSpentMap: Record<string, number> = {};
   receipts.forEach((r) => {
     if (r.date && r.total_amount) {
@@ -161,7 +158,6 @@ export default function Dashboard() {
     }
   });
 
-  // Take the last 7 unique transaction dates or pad with dummy values if empty
   let chartLabels = Object.keys(dateSpentMap).reverse();
   let chartValues = chartLabels.map((l) => dateSpentMap[l]);
 
@@ -170,6 +166,7 @@ export default function Dashboard() {
     chartValues = [240, 120, 480, 290, 890, 450, totalSpent || 1240];
   }
 
+  // Use the brand color from Stitch (#1a56db)
   const chartData: ChartData<"line"> = {
     labels: chartLabels,
     datasets: [
@@ -177,11 +174,11 @@ export default function Dashboard() {
         fill: true,
         label: "Daily Spend ($)",
         data: chartValues,
-        borderColor: "#06b6d4", // cyan-500
-        backgroundColor: "rgba(6, 182, 212, 0.05)",
+        borderColor: "#1a56db", // Stitch primary blue
+        backgroundColor: "rgba(26, 86, 219, 0.05)",
         tension: 0.3,
-        pointBackgroundColor: "#06b6d4",
-        pointBorderColor: "#0f172a",
+        pointBackgroundColor: "#1a56db",
+        pointBorderColor: "#ffffff",
         pointBorderWidth: 2,
         pointHoverRadius: 6,
       },
@@ -205,11 +202,11 @@ export default function Dashboard() {
     scales: {
       x: {
         grid: { display: false },
-        ticks: { color: "#64748b", font: { size: 10 } },
+        ticks: { color: "#64748b", font: { size: 10, weight: "bold" } },
       },
       y: {
         grid: { color: "rgba(148, 163, 184, 0.05)" },
-        ticks: { color: "#64748b", font: { size: 10 } },
+        ticks: { color: "#64748b", font: { size: 10, weight: "bold" } },
       },
     },
   };
@@ -220,10 +217,10 @@ export default function Dashboard() {
         {/* Welcome Banner */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-slate-100 via-slate-100 to-cyan-400 bg-clip-text text-transparent">
+            <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-foreground via-foreground to-primary bg-clip-text text-transparent">
               Welcome back, {session?.user?.name?.split(" ")[0] || "User"}
             </h1>
-            <p className="text-slate-400 text-sm mt-1">
+            <p className="text-muted-foreground text-sm mt-1">
               Here is your AI expense intelligence dashboard overview.
             </p>
           </div>
@@ -231,14 +228,14 @@ export default function Dashboard() {
             <Button
               variant="outline"
               size="sm"
-              className="border-slate-800 bg-slate-900 text-slate-300 hover:bg-slate-800"
+              className="border-border bg-card text-foreground hover:bg-muted"
             >
               Month
             </Button>
             <Button
               variant="outline"
               size="sm"
-              className="border-slate-800 bg-slate-900 text-slate-300 hover:bg-slate-800"
+              className="border-border bg-card text-foreground hover:bg-muted"
             >
               Quarter
             </Button>
@@ -249,15 +246,15 @@ export default function Dashboard() {
         {loading && (
           <div className="flex flex-col items-center justify-center py-20 space-y-3">
             <div className="relative w-10 h-10">
-              <div className="absolute inset-0 rounded-full border-4 border-slate-800" />
-              <div className="absolute inset-0 rounded-full border-4 border-t-cyan-400 animate-spin" />
+              <div className="absolute inset-0 rounded-full border-4 border-muted" />
+              <div className="absolute inset-0 rounded-full border-4 border-t-primary animate-spin" />
             </div>
-            <p className="text-slate-500 font-mono text-xs">Fetching ledger details...</p>
+            <p className="text-muted-foreground font-mono text-xs">Fetching ledger details...</p>
           </div>
         )}
 
         {error && (
-          <div className="p-4 rounded-xl border border-red-500/20 bg-red-950/10 text-red-400 text-center flex items-center justify-center gap-2">
+          <div className="p-4 rounded-xl border border-red-500/20 bg-red-500/5 text-red-500 text-center flex items-center justify-center gap-2">
             <AlertCircle className="h-5 w-5" />
             <span className="text-sm font-semibold">{error}</span>
           </div>
@@ -268,10 +265,10 @@ export default function Dashboard() {
             {/* Charts & Quick Actions */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Trend line */}
-              <Card className="lg:col-span-2 bg-slate-900/40 border-slate-800 backdrop-blur-xl">
+              <Card className="lg:col-span-2 bg-card border-border">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-lg font-bold text-slate-200">Spending Trends</CardTitle>
-                  <CardDescription className="text-slate-500 text-xs">
+                  <CardTitle className="text-lg font-bold text-foreground">Spending Trends</CardTitle>
+                  <CardDescription className="text-muted-foreground text-xs">
                     Overview of parsed receipts transactions
                   </CardDescription>
                 </CardHeader>
@@ -281,25 +278,25 @@ export default function Dashboard() {
               </Card>
 
               {/* Quick Actions */}
-              <Card className="bg-slate-900/40 border-slate-800 backdrop-blur-xl flex flex-col justify-between">
+              <Card className="bg-card border-border flex flex-col justify-between">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-lg font-bold text-slate-200">Quick Actions</CardTitle>
-                  <CardDescription className="text-slate-500 text-xs">
+                  <CardTitle className="text-lg font-bold text-foreground">Quick Actions</CardTitle>
+                  <CardDescription className="text-muted-foreground text-xs">
                     Scan receipt or generate summary
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4 pt-2">
                   <div
                     onClick={() => router.push("/")}
-                    className="border-2 border-dashed border-slate-800 hover:border-cyan-500/40 rounded-2xl p-6 flex flex-col items-center justify-center text-center cursor-pointer group hover:bg-slate-900/20 transition-all duration-200"
+                    className="border-2 border-dashed border-border hover:border-primary/40 rounded-2xl p-6 flex flex-col items-center justify-center text-center cursor-pointer group hover:bg-muted/20 transition-all duration-200"
                   >
-                    <div className="h-10 w-10 rounded-full bg-cyan-950/30 border border-cyan-800/20 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
-                      <UploadCloud className="h-5 w-5 text-cyan-400" />
+                    <div className="h-10 w-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
+                      <UploadCloud className="h-5 w-5 text-primary" />
                     </div>
-                    <p className="text-sm font-bold text-slate-200 group-hover:text-cyan-400 transition-colors">
+                    <p className="text-sm font-bold text-foreground group-hover:text-primary transition-colors">
                       Scan New Receipt
                     </p>
-                    <p className="text-slate-500 text-[11px] mt-0.5 leading-relaxed">
+                    <p className="text-muted-foreground text-[11px] mt-0.5 leading-relaxed">
                       Upload image to begin local OCR extraction
                     </p>
                   </div>
@@ -307,7 +304,7 @@ export default function Dashboard() {
                   <Button
                     variant="outline"
                     onClick={() => router.push("/reports")}
-                    className="w-full border-slate-800 bg-slate-950 hover:bg-slate-900 hover:text-slate-200 text-slate-400 py-5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 cursor-pointer"
+                    className="w-full border-border bg-secondary hover:bg-secondary/80 text-foreground py-5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 cursor-pointer"
                   >
                     <FileSpreadsheet className="h-4 w-4" />
                     <span>View Financial Reports</span>
@@ -318,72 +315,72 @@ export default function Dashboard() {
 
             {/* Metrics cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card className="bg-slate-900/40 border-slate-800 backdrop-blur-xl shadow-lg">
+              <Card className="bg-card border-border shadow-md">
                 <CardContent className="p-6 flex flex-col justify-between">
                   <div className="flex justify-between items-start">
-                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
                       Monthly Spend
                     </span>
-                    <Badge className="bg-cyan-500/10 hover:bg-cyan-500/10 text-cyan-400 border-none flex items-center gap-1 text-[10px]">
+                    <Badge className="bg-primary/10 hover:bg-primary/10 text-primary border-none flex items-center gap-1 text-[10px] font-bold">
                       <TrendingUp className="h-3 w-3" />
                       <span>+12.4%</span>
                     </Badge>
                   </div>
-                  <p className="text-3xl font-extrabold text-slate-100 mt-4 font-mono">
+                  <p className="text-3xl font-extrabold text-foreground mt-4 font-mono">
                     ${totalSpent.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
                 </CardContent>
               </Card>
 
-              <Card className="bg-slate-900/40 border-slate-800 backdrop-blur-xl shadow-lg">
+              <Card className="bg-card border-border shadow-md">
                 <CardContent className="p-6 flex flex-col justify-between">
                   <div className="flex justify-between items-start">
-                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
                       Active Syncs
                     </span>
-                    <Badge className="bg-emerald-500/10 hover:bg-emerald-500/10 text-emerald-400 border-none flex items-center gap-1 text-[10px]">
+                    <Badge className="bg-emerald-500/10 hover:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-none flex items-center gap-1 text-[10px] font-bold">
                       <Clock className="h-3 w-3" />
                       <span>Syncing</span>
                     </Badge>
                   </div>
-                  <p className="text-3xl font-extrabold text-slate-100 mt-4 font-mono">
-                    {receipts.length} <span className="text-xs font-normal text-slate-500 font-sans">items</span>
+                  <p className="text-3xl font-extrabold text-foreground mt-4 font-mono">
+                    {receipts.length} <span className="text-xs font-normal text-muted-foreground font-sans">items</span>
                   </p>
                 </CardContent>
               </Card>
 
-              <Card className="bg-slate-900/40 border-slate-800 backdrop-blur-xl shadow-lg">
+              <Card className="bg-card border-border shadow-md">
                 <CardContent className="p-6 flex flex-col justify-between">
                   <div className="flex justify-between items-start">
-                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
                       Budget Used
                     </span>
-                    <span className="text-xs font-mono font-bold text-slate-300">
+                    <span className="text-xs font-mono font-bold text-foreground">
                       60%
                     </span>
                   </div>
                   <div className="mt-4 space-y-2">
-                    <p className="text-2xl font-black text-slate-100 font-mono">
-                      $3,000.00 / <span className="text-slate-500 text-sm font-normal">$5,000</span>
+                    <p className="text-2xl font-black text-foreground font-mono">
+                      $3,000.00 / <span className="text-muted-foreground text-sm font-normal">$5,000</span>
                     </p>
-                    <Progress value={60} className="h-1.5 bg-slate-800" />
+                    <Progress value={60} className="h-1.5 bg-muted" />
                   </div>
                 </CardContent>
               </Card>
             </div>
 
             {/* Recent Activity */}
-            <Card className="bg-slate-900/40 border-slate-800 backdrop-blur-xl">
+            <Card className="bg-card border-border">
               <CardHeader className="flex flex-row items-center justify-between">
                 <div>
-                  <CardTitle className="text-lg font-bold text-slate-200">Recent Activity</CardTitle>
-                  <CardDescription className="text-slate-500 text-xs">
+                  <CardTitle className="text-lg font-bold text-foreground">Recent Activity</CardTitle>
+                  <CardDescription className="text-muted-foreground text-xs">
                     Latest receipts processed by the vision LLM agent
                   </CardDescription>
                 </div>
                 <Link
                   href="/history"
-                  className="text-xs text-cyan-400 hover:text-cyan-300 font-bold flex items-center gap-1 hover:underline"
+                  className="text-xs text-primary hover:underline font-bold flex items-center gap-1"
                 >
                   <span>View History</span>
                   <ArrowRight className="h-3.5 w-3.5" />
@@ -392,28 +389,28 @@ export default function Dashboard() {
               <CardContent className="pt-2">
                 {receipts.length === 0 ? (
                   <div className="text-center py-10">
-                    <Receipt className="h-12 w-12 text-slate-800 mx-auto mb-3" />
-                    <p className="text-sm font-semibold text-slate-400">No transactions recorded yet</p>
-                    <p className="text-xs text-slate-600 mt-1">Upload receipt images on the homepage to start parsing.</p>
+                    <Receipt className="h-12 w-12 text-muted mx-auto mb-3" />
+                    <p className="text-sm font-semibold text-muted-foreground">No transactions recorded yet</p>
+                    <p className="text-xs text-muted-foreground/60 mt-1">Upload receipt images on the homepage to start parsing.</p>
                   </div>
                 ) : (
-                  <div className="overflow-x-auto border border-slate-900 rounded-xl">
+                  <div className="overflow-x-auto border border-border rounded-xl">
                     <Table>
-                      <TableHeader className="bg-slate-950/40 border-b border-slate-900">
-                        <TableRow className="border-slate-900 hover:bg-transparent">
-                          <TableHead className="text-slate-500 font-bold text-[10px] uppercase tracking-wider py-4 pl-6">
+                      <TableHeader className="bg-muted/20 border-b border-border">
+                        <TableRow className="border-border hover:bg-transparent">
+                          <TableHead className="text-muted-foreground font-bold text-[10px] uppercase tracking-wider py-4 pl-6">
                             Date
                           </TableHead>
-                          <TableHead className="text-slate-500 font-bold text-[10px] uppercase tracking-wider py-4">
+                          <TableHead className="text-muted-foreground font-bold text-[10px] uppercase tracking-wider py-4">
                             Merchant
                           </TableHead>
-                          <TableHead className="text-slate-500 font-bold text-[10px] uppercase tracking-wider py-4">
+                          <TableHead className="text-muted-foreground font-bold text-[10px] uppercase tracking-wider py-4">
                             Category
                           </TableHead>
-                          <TableHead className="text-slate-500 font-bold text-[10px] uppercase tracking-wider py-4 text-right pr-10">
+                          <TableHead className="text-muted-foreground font-bold text-[10px] uppercase tracking-wider py-4 text-right pr-10">
                             Amount
                           </TableHead>
-                          <TableHead className="text-slate-500 font-bold text-[10px] uppercase tracking-wider py-4 text-center pr-6">
+                          <TableHead className="text-muted-foreground font-bold text-[10px] uppercase tracking-wider py-4 text-center pr-6">
                             Status
                           </TableHead>
                         </TableRow>
@@ -424,10 +421,10 @@ export default function Dashboard() {
                           return (
                             <TableRow
                               key={r.receipt_id}
-                              className="border-slate-900 hover:bg-slate-900/30 transition cursor-pointer"
+                              className="border-border hover:bg-muted/10 transition cursor-pointer"
                               onClick={() => router.push("/history")}
                             >
-                              <TableCell className="py-4 text-slate-300 font-medium text-xs pl-6">
+                              <TableCell className="py-4 text-foreground font-medium text-xs pl-6">
                                 {r.date
                                   ? new Date(r.date).toLocaleDateString("en-US", {
                                       year: "numeric",
@@ -436,10 +433,10 @@ export default function Dashboard() {
                                     })
                                   : "—"}
                               </TableCell>
-                              <TableCell className="py-4 font-bold text-slate-200 text-xs">
+                              <TableCell className="py-4 font-bold text-foreground text-xs">
                                 <div className="flex items-center gap-2">
-                                  <div className="h-7 w-7 rounded bg-slate-900 border border-slate-800/80 flex items-center justify-center text-slate-400">
-                                    <IconComponent className="h-3.5 w-3.5 text-slate-400" />
+                                  <div className="h-7 w-7 rounded bg-muted border border-border/80 flex items-center justify-center text-muted-foreground">
+                                    <IconComponent className="h-3.5 w-3.5" />
                                   </div>
                                   <span>{r.merchant_name || "Unknown Merchant"}</span>
                                 </div>
@@ -447,16 +444,16 @@ export default function Dashboard() {
                               <TableCell className="py-4">
                                 <Badge
                                   variant="outline"
-                                  className="text-[10px] px-2 py-0.5 rounded-full border-slate-800 bg-slate-900/30 text-slate-400"
+                                  className="text-[10px] px-2 py-0.5 rounded-full border-border bg-muted/30 text-muted-foreground"
                                 >
                                   {r.category || "Other"}
                                 </Badge>
                               </TableCell>
-                              <TableCell className="py-4 text-right font-black font-mono text-slate-200 text-xs pr-10">
+                              <TableCell className="py-4 text-right font-black font-mono text-foreground text-xs pr-10">
                                 ${(r.total_amount || 0).toFixed(2)}
                               </TableCell>
                               <TableCell className="py-4 text-center pr-6">
-                                <Badge className="bg-emerald-500/10 hover:bg-emerald-500/10 text-emerald-400 border-none font-bold text-[10px] rounded-full px-2.5 py-0.5">
+                                <Badge className="bg-emerald-500/10 hover:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-none font-bold text-[10px] rounded-full px-2.5 py-0.5">
                                   Verified
                                 </Badge>
                               </TableCell>
