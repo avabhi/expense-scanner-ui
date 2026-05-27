@@ -1,9 +1,12 @@
 "use client";
 
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { useSession, signOut } from "next-auth/react";
 import { fetchWithAuth } from "@/lib/auth";
+import AppLayout from "@/components/AppLayout";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Chart as ChartJS,
   ArcElement,
@@ -12,6 +15,7 @@ import {
   ChartData,
 } from "chart.js";
 import { Doughnut } from "react-chartjs-2";
+import { ArrowLeft, Clock, AlertCircle, RefreshCw, ChevronDown } from "lucide-react";
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
@@ -56,7 +60,6 @@ function getCurrencySymbol(code: string | null) {
 }
 
 export default function CategoriesPage() {
-  const { data: session } = useSession();
   const [summaries, setSummaries] = useState<CategorySummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -113,7 +116,7 @@ export default function CategoriesPage() {
         callbacks: {
           label: (ctx: any) => {
             const pct = totalSpent > 0 ? ((ctx.parsed / totalSpent) * 100).toFixed(1) : "0";
-            return `  ${ctx.parsed.toFixed(2)}  (${pct}%)`;
+            return `  $${ctx.parsed.toFixed(2)}  (${pct}%)`;
           },
         },
       },
@@ -124,70 +127,15 @@ export default function CategoriesPage() {
     setExpanded((prev) => ({ ...prev, [cat]: !prev[cat] }));
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col selection:bg-cyan-500/30 selection:text-cyan-200">
-      {/* Background gradient */}
-      <div className="absolute top-0 left-0 right-0 h-[500px] bg-gradient-to-b from-cyan-900/10 via-blue-950/5 to-transparent pointer-events-none select-none" />
-
-      {/* Header */}
-      <header className="relative border-b border-slate-900 bg-slate-950/60 backdrop-blur-md z-10">
-        <div className="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
-              <svg className="h-5 w-5 text-slate-950" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-              </svg>
-            </div>
-            <div>
-              <span className="font-extrabold text-lg tracking-wider text-slate-100">EXPENSE SCANNER</span>
-              <span className="ml-2.5 text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700 text-cyan-400 font-semibold">
-                OLLAMA AGENT
-              </span>
-            </div>
-          </div>
-          <nav className="flex items-center gap-4 text-xs font-mono text-slate-400">
-            <Link href="/" className="text-slate-400 hover:text-slate-100 transition">
-              ← Upload
-            </Link>
-            <span className="text-slate-600">|</span>
-            <span className="text-cyan-400 font-semibold">Categories</span>
-
-            {session?.user && (
-              <div className="flex items-center space-x-3 bg-slate-900 border border-slate-800 pl-3 pr-1 py-1 rounded-xl">
-                <span className="text-slate-300 font-semibold text-[11px] max-w-[100px] truncate">
-                  {session.user.name || session.user.email}
-                </span>
-                {session.user.image ? (
-                  <img
-                    src={session.user.image}
-                    alt="User avatar"
-                    className="h-6 w-6 rounded-full border border-slate-700"
-                  />
-                ) : (
-                  <div className="h-6 w-6 rounded-full bg-slate-800 flex items-center justify-center border border-slate-700 text-[10px] text-cyan-400 font-bold">
-                    {session.user.name ? session.user.name[0].toUpperCase() : "U"}
-                  </div>
-                )}
-                <button
-                  onClick={() => signOut({ callbackUrl: "/" })}
-                  className="px-2.5 py-1 rounded bg-red-950/30 hover:bg-red-950/60 border border-red-900/30 hover:border-red-900/60 text-[10px] font-bold text-red-400 transition cursor-pointer"
-                  title="Sign Out"
-                >
-                  Sign Out
-                </button>
-              </div>
-            )}
-          </nav>
-        </div>
-      </header>
-
-      <main className="flex-1 max-w-6xl w-full mx-auto px-6 py-12 z-10 space-y-10">
+    <AppLayout>
+      <div className="space-y-6">
         {/* Page title */}
-        <div className="space-y-1">
+        <div>
           <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-slate-100 to-cyan-400 bg-clip-text text-transparent">
             Spending by Category
           </h1>
-          <p className="text-slate-400 text-sm">
-            AI-assigned breakdown across all your scanned receipts. Click any category to see which bills it came from.
+          <p className="text-slate-400 text-sm mt-1">
+            AI-assigned breakdown across all your scanned receipts. Click any category to see its details.
           </p>
         </div>
 
@@ -197,152 +145,157 @@ export default function CategoriesPage() {
               <div className="absolute inset-0 rounded-full border-4 border-slate-800" />
               <div className="absolute inset-0 rounded-full border-4 border-t-cyan-400 animate-spin" />
             </div>
-            <p className="text-slate-500 font-mono text-sm">Loading category data...</p>
+            <p className="text-slate-500 font-mono text-xs">Loading category summary data...</p>
           </div>
         )}
 
         {error && (
-          <div className="p-6 rounded-xl border border-red-500/20 bg-red-950/10 text-center space-y-3">
-            <p className="text-red-400 font-semibold">Failed to load categories</p>
-            <p className="text-slate-400 text-sm">{error}</p>
+          <div className="p-4 rounded-xl border border-red-500/20 bg-red-950/10 text-red-400 text-center flex items-center justify-center gap-2">
+            <AlertCircle className="h-5 w-5" />
+            <span className="text-sm font-semibold">{error}</span>
           </div>
         )}
 
         {!loading && !error && summaries.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-24 space-y-4 text-center">
-            <div className="h-16 w-16 rounded-2xl bg-slate-800/80 border border-slate-700 flex items-center justify-center text-3xl">
+          <div className="flex flex-col items-center justify-center py-20 space-y-4 text-center">
+            <div className="h-16 w-16 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center text-2xl shadow-xl">
               🧾
             </div>
-            <h3 className="text-lg font-semibold text-slate-300">No categorized receipts yet</h3>
-            <p className="text-slate-500 text-sm max-w-sm">
+            <h3 className="text-base font-bold text-slate-300">No categorized receipts yet</h3>
+            <p className="text-slate-500 text-xs max-w-xs leading-relaxed">
               Upload and process a receipt first. Once the AI parses it, your spending categories will appear here.
             </p>
-            <Link
-              href="/"
-              className="mt-2 px-5 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-sm font-semibold rounded-lg hover:from-cyan-400 hover:to-blue-500 transition"
+            <Button
+              onClick={() => window.location.href = "/"}
+              className="mt-2 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold py-2 px-5 rounded-xl cursor-pointer"
             >
               Upload a Receipt
-            </Link>
+            </Button>
           </div>
         )}
 
         {!loading && !error && summaries.length > 0 && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             {/* Left: Donut Chart */}
-            <div className="lg:col-span-5 rounded-2xl border border-slate-800 bg-slate-950/60 backdrop-blur-md p-8 flex flex-col items-center justify-center space-y-8">
-              <div className="relative w-full max-w-[280px] h-[280px]">
+            <Card className="lg:col-span-5 bg-slate-900/40 border-slate-800 backdrop-blur-xl p-6 flex flex-col items-center justify-center space-y-6">
+              <div className="relative w-full max-w-[240px] h-[240px] flex items-center justify-center">
                 <Doughnut data={chartData} options={chartOptions as any} />
                 {/* Centre label */}
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <p className="text-xs text-slate-500 font-mono uppercase tracking-wider">Total Spent</p>
-                  <p className="text-2xl font-black text-cyan-400 mt-1">
-                    {totalSpent.toFixed(2)}
+                  <p className="text-[10px] text-slate-500 font-mono uppercase tracking-wider">Total Spent</p>
+                  <p className="text-2xl font-black text-cyan-400 font-mono mt-0.5">
+                    ${totalSpent.toFixed(2)}
                   </p>
                 </div>
               </div>
 
               {/* Custom legend */}
-              <div className="w-full space-y-2">
+              <div className="w-full space-y-2 text-xs">
                 {summaries.map((c) => {
                   const colors = CATEGORY_PALETTE[c.category] ?? CATEGORY_PALETTE["Other"];
                   const pct = totalSpent > 0 ? ((c.total_spent / totalSpent) * 100).toFixed(1) : "0";
                   return (
-                    <div key={c.category} className="flex items-center justify-between text-sm">
+                    <div key={c.category} className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${colors.dot}`} />
-                        <span className="text-slate-300 truncate max-w-[150px]">{c.category}</span>
+                        <span className="text-slate-400 truncate max-w-[150px]">{c.category}</span>
                       </div>
-                      <div className="flex items-center gap-3 text-xs font-mono">
+                      <div className="flex items-center gap-3 font-mono">
                         <span className="text-slate-500">{pct}%</span>
-                        <span className={`font-semibold ${colors.text}`}>{c.total_spent.toFixed(2)}</span>
+                        <span className={`font-semibold ${colors.text}`}>${c.total_spent.toFixed(2)}</span>
                       </div>
                     </div>
                   );
                 })}
               </div>
-            </div>
+            </Card>
 
             {/* Right: Drill-down list */}
-            <div className="lg:col-span-7 space-y-4">
+            <div className="lg:col-span-7 space-y-3">
               {summaries.map((c) => {
                 const colors = CATEGORY_PALETTE[c.category] ?? CATEGORY_PALETTE["Other"];
                 const isOpen = !!expanded[c.category];
                 const pct = totalSpent > 0 ? ((c.total_spent / totalSpent) * 100).toFixed(1) : "0";
 
                 return (
-                  <div
+                  <Card
                     key={c.category}
-                    className={`rounded-2xl border transition-all duration-200 overflow-hidden ${colors.border} ${colors.bg}`}
+                    className={`transition-all duration-200 border bg-slate-900/10 hover:bg-slate-900/20 backdrop-blur-xl ${colors.border}`}
                   >
                     {/* Category row header */}
                     <button
                       onClick={() => toggleExpand(c.category)}
-                      className="w-full px-6 py-4 flex items-center justify-between hover:bg-white/5 transition"
+                      className="w-full px-5 py-4 flex items-center justify-between text-left cursor-pointer"
                     >
                       <div className="flex items-center gap-3">
                         <span className={`w-3 h-3 rounded-full flex-shrink-0 ${colors.dot}`} />
-                        <span className={`font-bold text-sm ${colors.text}`}>{c.category}</span>
-                        <span className="text-xs text-slate-500 font-mono">{c.item_count} items · {c.receipts.length} receipts</span>
+                        <span className={`font-bold text-sm text-slate-200`}>{c.category}</span>
+                        <span className="text-[10px] text-slate-500 font-mono">
+                          {c.item_count} items · {c.receipts.length} receipts
+                        </span>
                       </div>
                       <div className="flex items-center gap-4">
                         <div className="text-right">
-                          <p className={`text-base font-black ${colors.text}`}>{c.total_spent.toFixed(2)}</p>
-                          <p className="text-xs text-slate-500 font-mono">{pct}% of total</p>
+                          <p className={`text-sm font-black font-mono text-slate-200`}>${c.total_spent.toFixed(2)}</p>
+                          <p className="text-[10px] text-slate-500 font-mono">{pct}% of total</p>
                         </div>
-                        <svg
-                          className={`h-4 w-4 text-slate-500 transition-transform ${isOpen ? "rotate-180" : ""}`}
-                          fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"
-                        >
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                        </svg>
+                        <ChevronDown
+                          className={`h-4 w-4 text-slate-500 transition-transform duration-200 ${
+                            isOpen ? "rotate-180 text-cyan-400" : ""
+                          }`}
+                        />
                       </div>
                     </button>
 
                     {/* Expanded: linked receipts */}
                     {isOpen && (
-                      <div className="border-t border-white/5 divide-y divide-white/5">
+                      <div className="border-t border-slate-900 divide-y divide-slate-900 bg-slate-950/40">
                         {c.receipts.map((r) => (
                           <Link
                             key={r.receipt_id}
-                            href="/"
-                            className="flex items-center justify-between px-6 py-3.5 hover:bg-white/5 transition group"
+                            href="/history"
+                            className="flex items-center justify-between px-5 py-3 hover:bg-slate-900/40 transition group"
                           >
                             <div className="flex items-center gap-3">
-                              <div className="h-8 w-8 rounded-lg bg-slate-800/60 border border-slate-700 flex items-center justify-center text-sm">
+                              <div className="h-8 w-8 rounded-lg bg-slate-900 border border-slate-800/80 flex items-center justify-center text-sm shadow-sm">
                                 🧾
                               </div>
                               <div>
-                                <p className="text-sm font-semibold text-slate-200 group-hover:text-white transition">
+                                <p className="text-xs font-bold text-slate-300 group-hover:text-slate-100 transition">
                                   {r.merchant_name || "Unknown Merchant"}
                                 </p>
-                                <p className="text-xs text-slate-500 font-mono">
-                                  {r.date ? new Date(r.date).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) : "Date unknown"}
-                                  <span className="ml-2 text-slate-600">#{r.receipt_id.slice(0, 8)}</span>
+                                <p className="text-[10px] text-slate-500 font-mono mt-0.5">
+                                  {r.date
+                                    ? new Date(r.date).toLocaleDateString("en-US", {
+                                        year: "numeric",
+                                        month: "short",
+                                        day: "numeric",
+                                      })
+                                    : "Date unknown"}{" "}
+                                  · <span className="text-slate-600">#{r.receipt_id.slice(0, 8)}</span>
                                 </p>
                               </div>
                             </div>
                             <div className="text-right">
-                              <p className="text-sm font-bold text-slate-200">
-                                {getCurrencySymbol(r.currency)}{r.total_amount?.toFixed(2) ?? "—"}
+                              <p className="text-xs font-bold text-slate-200 font-mono">
+                                {getCurrencySymbol(r.currency)}
+                                {r.total_amount?.toFixed(2) ?? "—"}
                               </p>
-                              <p className="text-xs text-slate-600 group-hover:text-slate-400 transition">View receipt →</p>
+                              <p className="text-[10px] text-cyan-500/80 group-hover:text-cyan-400 transition mt-0.5">
+                                View details →
+                              </p>
                             </div>
                           </Link>
                         ))}
                       </div>
                     )}
-                  </div>
+                  </Card>
                 );
               })}
             </div>
           </div>
         )}
-      </main>
-
-      <footer className="border-t border-slate-900 bg-slate-950/40 py-6 text-center text-xs text-slate-600 font-mono">
-        <p>Expense Scanner Agent • AI Category Classification</p>
-      </footer>
-    </div>
+      </div>
+    </AppLayout>
   );
 }
