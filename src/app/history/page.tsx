@@ -616,7 +616,7 @@ export default function HistoryPage() {
                       <span>Itemized Extraction Breakdown</span>
                     </p>
 
-                    <div className="border border-border rounded-2xl overflow-hidden">
+                    <div className="border border-border rounded-2xl overflow-x-auto">
                       <Table>
                         <TableHeader className="bg-muted/20 border-b border-border">
                           <TableRow className="border-border hover:bg-transparent">

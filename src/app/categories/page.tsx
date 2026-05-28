@@ -230,10 +230,12 @@ export default function CategoriesPage() {
                     >
                       <div className="flex items-center gap-3">
                         <span className={`w-3 h-3 rounded-full flex-shrink-0 ${colors.dot}`} />
-                        <span className={`font-bold text-sm text-slate-200`}>{c.category}</span>
-                        <span className="text-[10px] text-slate-500 font-mono">
-                          {c.item_count} items · {c.receipts.length} receipts
-                        </span>
+                        <div>
+                          <p className="font-bold text-sm text-slate-200 leading-tight">{c.category}</p>
+                          <p className="text-[10px] text-slate-500 font-mono mt-1">
+                            {c.item_count} items · {c.receipts.length} receipts
+                          </p>
+                        </div>
                       </div>
                       <div className="flex items-center gap-4">
                         <div className="text-right">
