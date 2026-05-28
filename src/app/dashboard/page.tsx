@@ -40,6 +40,7 @@ import {
   Coffee,
   Coins,
   Database,
+  LucideIcon,
 } from "lucide-react";
 import {
   Chart as ChartJS,
@@ -52,6 +53,7 @@ import {
   Legend,
   Filler,
   ChartData,
+  ChartOptions,
 } from "chart.js";
 import { Line } from "react-chartjs-2";
 
@@ -83,7 +85,7 @@ interface CategorySummary {
   receipts: ReceiptRef[];
 }
 
-const CATEGORY_ICONS: Record<string, any> = {
+const CATEGORY_ICONS: Record<string, LucideIcon> = {
   "Food & Dining": Coffee,
   "Groceries": ShoppingBag,
   "Transport": Car,
@@ -135,8 +137,8 @@ export default function Dashboard() {
         });
 
         setReceipts(allReceipts);
-      } catch (e: any) {
-        setError(e.message);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "An unexpected error occurred.");
       } finally {
         setLoading(false);
       }
@@ -185,7 +187,7 @@ export default function Dashboard() {
     ],
   };
 
-  const chartOptions = {
+  const chartOptions: ChartOptions<"line"> = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
@@ -273,7 +275,7 @@ export default function Dashboard() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="h-[220px] pt-4">
-                  <Line data={chartData} options={chartOptions as any} />
+                  <Line data={chartData} options={chartOptions} />
                 </CardContent>
               </Card>
 

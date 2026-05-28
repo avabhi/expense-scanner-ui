@@ -6,7 +6,6 @@ import ProgressTracker from "@/components/ProgressTracker";
 import ReceiptResult from "@/components/ReceiptResult";
 import AppLayout from "@/components/AppLayout";
 import { AlertCircle, RefreshCw } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 export default function Home() {
   const [step, setStep] = useState<"upload" | "processing" | "result">("upload");

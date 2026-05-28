@@ -22,9 +22,11 @@ export default function ProgressTracker({ jobId, onComplete, onFailure }: Progre
 
   useEffect(() => {
     if (jobId === "cached") {
-      setCurrentStatus("completed");
-      onComplete();
-      return;
+      const timer = setTimeout(() => {
+        setCurrentStatus("completed");
+        onComplete();
+      }, 0);
+      return () => clearTimeout(timer);
     }
 
     // Connect directly to FastAPI SSE stream (bypassing Next.js proxy buffering)

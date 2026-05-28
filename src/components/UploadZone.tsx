@@ -124,10 +124,10 @@ export default function UploadZone({ onUploadSuccess, onUploadError }: UploadZon
         onUploadSuccess(result.job_id, result.receipt_id, previewUrl);
       }
 
-    } catch (err: any) {
+    } catch (err) {
       setStatus("idle");
       setProgress(0);
-      onUploadError(err.message || "An unexpected error occurred during upload.");
+      onUploadError(err instanceof Error ? err.message : "An unexpected error occurred during upload.");
     }
   };
 

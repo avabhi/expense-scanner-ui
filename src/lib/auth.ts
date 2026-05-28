@@ -7,7 +7,7 @@ import { getSession, signOut } from "next-auth/react";
  */
 export async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<Response> {
   const session = await getSession();
-  const token = (session as any)?.backendAccessToken;
+  const token = (session as { backendAccessToken?: string } | null)?.backendAccessToken;
 
   const headers = new Headers(options.headers || {});
   

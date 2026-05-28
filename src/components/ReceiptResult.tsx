@@ -6,7 +6,7 @@ import { fetchWithAuth } from "@/lib/auth";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowLeft, Clock, AlertTriangle } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 
 interface LineItem {
   id: number;
@@ -74,8 +74,8 @@ export default function ReceiptResult({ receiptId, imageUrl, onReset }: ReceiptR
         }
         const json = await response.json();
         setData(json);
-      } catch (err: any) {
-        setError(err.message || "An unexpected error occurred while loading receipt details.");
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "An unexpected error occurred while loading receipt details.");
       } finally {
         setLoading(false);
       }

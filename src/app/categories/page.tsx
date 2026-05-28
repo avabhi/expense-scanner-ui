@@ -4,8 +4,7 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { fetchWithAuth } from "@/lib/auth";
 import AppLayout from "@/components/AppLayout";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   Chart as ChartJS,
@@ -13,9 +12,10 @@ import {
   Tooltip,
   Legend,
   ChartData,
+  ChartOptions,
 } from "chart.js";
 import { Doughnut } from "react-chartjs-2";
-import { ArrowLeft, Clock, AlertCircle, RefreshCw, ChevronDown } from "lucide-react";
+import { AlertCircle, ChevronDown } from "lucide-react";
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
@@ -73,8 +73,9 @@ export default function CategoriesPage() {
         if (!res.ok) throw new Error("Failed to load category data.");
         const json: CategorySummary[] = await res.json();
         setSummaries(json);
-      } catch (e: any) {
-        setError(e.message);
+      } catch (e) {
+        const err = e as Error;
+        setError(err.message);
       } finally {
         setLoading(false);
       }
@@ -100,7 +101,7 @@ export default function CategoriesPage() {
     ],
   };
 
-  const chartOptions = {
+  const chartOptions: ChartOptions<"doughnut"> = {
     responsive: true,
     maintainAspectRatio: false,
     cutout: "72%",
@@ -114,7 +115,7 @@ export default function CategoriesPage() {
         borderWidth: 1,
         padding: 12,
         callbacks: {
-          label: (ctx: any) => {
+          label: (ctx) => {
             const pct = totalSpent > 0 ? ((ctx.parsed / totalSpent) * 100).toFixed(1) : "0";
             return `  $${ctx.parsed.toFixed(2)}  (${pct}%)`;
           },
@@ -179,7 +180,7 @@ export default function CategoriesPage() {
             {/* Left: Donut Chart */}
             <Card className="lg:col-span-5 bg-slate-900/40 border-slate-800 backdrop-blur-xl p-6 flex flex-col items-center justify-center space-y-6">
               <div className="relative w-full max-w-[240px] h-[240px] flex items-center justify-center">
-                <Doughnut data={chartData} options={chartOptions as any} />
+                <Doughnut data={chartData} options={chartOptions} />
                 {/* Centre label */}
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                   <p className="text-[10px] text-slate-500 font-mono uppercase tracking-wider">Total Spent</p>

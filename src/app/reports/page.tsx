@@ -9,17 +9,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import {
-  TrendingUp,
   Download,
   AlertCircle,
   ShoppingBag,
-  Car,
-  Plane,
-  Hotel,
-  Briefcase,
-  Database,
-  Coffee,
-  Coins,
 } from "lucide-react";
 import { Doughnut, Line } from "react-chartjs-2";
 import {
@@ -33,6 +25,8 @@ import {
   LineElement,
   Filler,
   ChartData,
+  ChartOptions,
+  TooltipItem,
 } from "chart.js";
 
 ChartJS.register(
@@ -63,18 +57,7 @@ interface CategorySummary {
   receipts: ReceiptRef[];
 }
 
-const CATEGORY_ICONS: Record<string, any> = {
-  "Food & Dining": Coffee,
-  "Groceries": ShoppingBag,
-  "Transport": Car,
-  "Travel": Plane,
-  "Travel & Lodging": Plane,
-  "Lodging": Hotel,
-  "Office Supplies": Briefcase,
-  "Software / SaaS": Database,
-  "Cloud Infrastructure": Database,
-  "Other": Coins,
-};
+
 
 // Colour palette aligned with ReceiptResult badges
 const CATEGORY_COLORS: Record<string, string> = {
@@ -131,8 +114,8 @@ export default function ReportsPage() {
 
         const allReceipts = Object.values(uniqueReceiptsMap);
         setReceipts(allReceipts);
-      } catch (e: any) {
-        setError(e.message);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "An unexpected error occurred.");
       } finally {
         setLoading(false);
       }
@@ -162,7 +145,7 @@ export default function ReportsPage() {
     };
   }, [summaries]);
 
-  const donutOptions = {
+  const donutOptions: ChartOptions<"doughnut"> = {
     responsive: true,
     maintainAspectRatio: false,
     cutout: "75%",
@@ -176,9 +159,10 @@ export default function ReportsPage() {
         borderWidth: 1,
         padding: 10,
         callbacks: {
-          label: (ctx: any) => {
-            const pct = totalSpent > 0 ? ((ctx.parsed / totalSpent) * 100).toFixed(1) : "0";
-            return ` $${ctx.parsed.toFixed(2)} (${pct}%)`;
+          label: (ctx: TooltipItem<"doughnut">) => {
+            const val = typeof ctx.raw === "number" ? ctx.raw : 0;
+            const pct = totalSpent > 0 ? ((val / totalSpent) * 100).toFixed(1) : "0";
+            return ` $${val.toFixed(2)} (${pct}%)`;
           },
         },
       },
@@ -244,7 +228,7 @@ export default function ReportsPage() {
     ],
   };
 
-  const trendOptions = {
+  const trendOptions: ChartOptions<"line"> = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
@@ -324,7 +308,7 @@ export default function ReportsPage() {
                 </CardHeader>
                 <CardContent className="flex flex-col items-center justify-center pb-6">
                   <div className="relative w-[200px] h-[200px] flex items-center justify-center">
-                    <Doughnut data={donutChartData} options={donutOptions as any} />
+                    <Doughnut data={donutChartData} options={donutOptions} />
                     <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                       <p className="text-[10px] text-muted-foreground font-mono uppercase tracking-wider">Spent</p>
                       <p className="text-xl font-black text-primary font-mono mt-0.5">
@@ -363,7 +347,7 @@ export default function ReportsPage() {
                   </Badge>
                 </CardHeader>
                 <CardContent className="h-[230px] pt-4">
-                  <Line data={trendChartData} options={trendOptions as any} />
+                  <Line data={trendChartData} options={trendOptions} />
                 </CardContent>
               </Card>
             </div>

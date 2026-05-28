@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { fetchWithAuth } from "@/lib/auth";
 import AppLayout from "@/components/AppLayout";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,16 +13,12 @@ import { Slider } from "@/components/ui/slider";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import {
   Search,
   Eye,
   AlertCircle,
-  Clock,
   Download,
   RefreshCcw,
   Coins,
@@ -35,6 +31,7 @@ import {
   Coffee,
   Receipt,
   FileSpreadsheet,
+  LucideIcon,
 } from "lucide-react";
 
 interface ReceiptRef {
@@ -71,7 +68,7 @@ interface DetailedReceipt {
   line_items: LineItem[];
 }
 
-const CATEGORY_ICONS: Record<string, any> = {
+const CATEGORY_ICONS: Record<string, LucideIcon> = {
   "Food & Dining": Coffee,
   "Groceries": ShoppingBag,
   "Transport": Car,
@@ -140,8 +137,8 @@ export default function HistoryPage() {
         });
 
         setReceipts(allReceipts);
-      } catch (e: any) {
-        setError(e.message);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "An unexpected error occurred.");
       } finally {
         setLoading(false);
       }
@@ -152,8 +149,10 @@ export default function HistoryPage() {
   // Fetch full details when modal opens
   useEffect(() => {
     if (!selectedReceiptId) {
-      setDetailedReceipt(null);
-      return;
+      const timer = setTimeout(() => {
+        setDetailedReceipt(null);
+      }, 0);
+      return () => clearTimeout(timer);
     }
 
     async function loadDetails() {
@@ -164,8 +163,8 @@ export default function HistoryPage() {
         if (!res.ok) throw new Error("Failed to load receipt line items.");
         const json: DetailedReceipt = await res.json();
         setDetailedReceipt(json);
-      } catch (e: any) {
-        setDetailError(e.message);
+      } catch (e) {
+        setDetailError(e instanceof Error ? e.message : "An unexpected error occurred.");
       } finally {
         setDetailLoading(false);
       }
@@ -251,6 +250,13 @@ export default function HistoryPage() {
             </Button>
           </div>
         </div>
+
+        {error && (
+          <div className="p-4 rounded-xl border border-red-500/20 bg-red-500/5 text-red-500 text-center flex items-center justify-center gap-2">
+            <AlertCircle className="h-5 w-5" />
+            <span className="text-sm font-semibold">{error}</span>
+          </div>
+        )}
 
         {/* Filter Card */}
         <Card className="bg-card border-border">

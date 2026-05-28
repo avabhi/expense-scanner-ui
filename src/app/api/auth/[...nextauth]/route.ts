@@ -37,7 +37,7 @@ const handler = NextAuth({
     },
     async session({ session, token }) {
       // Pass the backend JWT to the client session
-      (session as any).backendAccessToken = token.backendAccessToken;
+      (session as { backendAccessToken?: unknown }).backendAccessToken = token.backendAccessToken;
       return session;
     },
   },
