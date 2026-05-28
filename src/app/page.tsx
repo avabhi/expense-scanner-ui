@@ -70,10 +70,10 @@ export default function Home() {
         {step === "upload" && (
           <div className="space-y-8 text-center py-8 z-10">
             <div className="space-y-2 max-w-lg mx-auto">
-              <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-slate-100 via-slate-100 to-cyan-400 bg-clip-text text-transparent">
+              <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-foreground via-foreground/95 to-primary bg-clip-text text-transparent">
                 Scan Receipts Offline with Vision LLM
               </h1>
-              <p className="text-slate-400 text-xs leading-relaxed">
+              <p className="text-muted-foreground text-xs leading-relaxed">
                 Upload expense receipts, bills, or invoices. Our local multimodal agent will perform OCR and extract structured line items completely offline.
               </p>
             </div>
@@ -88,11 +88,11 @@ export default function Home() {
         {step === "processing" && (
           <div className="space-y-8 py-8 z-10">
             <div className="text-center space-y-1">
-              <h2 className="text-xl font-bold text-slate-200 flex items-center justify-center gap-2">
-                <RefreshCw className="h-5 w-5 text-cyan-400 animate-spin" />
+              <h2 className="text-xl font-bold text-foreground flex items-center justify-center gap-2">
+                <RefreshCw className="h-5 w-5 text-primary animate-spin" />
                 <span>Processing Your Receipt</span>
               </h2>
-              <p className="text-slate-400 text-[10px] font-mono">Connecting to local worker stream...</p>
+              <p className="text-muted-foreground text-[10px] font-mono">Connecting to local worker stream...</p>
             </div>
             
             <ProgressTracker

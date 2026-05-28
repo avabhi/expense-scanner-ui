@@ -8,16 +8,16 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
 
   if (status === "loading") {
     return (
-      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col items-center justify-center font-mono select-none">
+      <div className="min-h-screen bg-[#11131b] text-[#e2e1ed] flex flex-col items-center justify-center font-mono select-none">
         <div className="relative flex items-center justify-center">
           {/* Outer rotating ring */}
-          <div className="absolute h-16 w-16 rounded-full border-2 border-transparent border-t-cyan-500 border-r-cyan-500 animate-spin"></div>
+          <div className="absolute h-16 w-16 rounded-full border-2 border-transparent border-t-[#1a56db] border-r-[#1a56db] animate-spin"></div>
           {/* Inner pulsing core */}
-          <div className="h-10 w-10 rounded-full bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center animate-pulse">
-            <div className="h-2 w-2 rounded-full bg-cyan-400"></div>
+          <div className="h-10 w-10 rounded-full bg-[#7bd0ff]/10 border border-[#7bd0ff]/30 flex items-center justify-center animate-pulse">
+            <div className="h-2 w-2 rounded-full bg-[#7bd0ff]"></div>
           </div>
         </div>
-        <p className="mt-6 text-[10px] text-slate-400 tracking-[0.25em] uppercase animate-pulse">
+        <p className="mt-6 text-[10px] text-[#c3c5d7] tracking-[0.25em] uppercase animate-pulse">
           Validating Security Session...
         </p>
       </div>
@@ -26,38 +26,38 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
 
   if (status === "unauthenticated") {
     return (
-      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col relative overflow-hidden selection:bg-cyan-500/30 selection:text-cyan-200">
+      <div className="min-h-screen bg-[#11131b] text-[#e2e1ed] flex flex-col relative overflow-hidden selection:bg-[#7bd0ff]/30 selection:text-[#7bd0ff]">
         {/* Background Decorative Gradients */}
-        <div className="absolute top-0 left-0 right-0 h-[600px] bg-gradient-to-b from-cyan-900/10 via-blue-950/5 to-transparent pointer-events-none select-none"></div>
-        <div className="absolute -top-[200px] left-[10%] w-[500px] h-[500px] rounded-full bg-cyan-500/5 blur-[120px] pointer-events-none"></div>
-        <div className="absolute bottom-0 right-[10%] w-[400px] h-[400px] rounded-full bg-blue-500/5 blur-[100px] pointer-events-none"></div>
+        <div className="absolute top-0 left-0 right-0 h-[600px] bg-gradient-to-b from-[#1a56db]/10 via-[#7bd0ff]/5 to-transparent pointer-events-none select-none"></div>
+        <div className="absolute -top-[200px] left-[10%] w-[500px] h-[500px] rounded-full bg-[#1a56db]/5 blur-[120px] pointer-events-none"></div>
+        <div className="absolute bottom-0 right-[10%] w-[400px] h-[400px] rounded-full bg-[#7bd0ff]/5 blur-[100px] pointer-events-none"></div>
 
         {/* Content Centered */}
         <div className="flex-1 flex flex-col items-center justify-center px-6 relative z-10">
-          <div className="w-full max-w-md bg-slate-900/40 border border-slate-800/80 p-8 rounded-2xl backdrop-blur-xl shadow-2xl flex flex-col items-center text-center animate-fade-in">
+          <div className="w-full max-w-md bg-[#1d1f27]/60 border border-[#434654]/50 p-8 rounded-2xl backdrop-blur-xl shadow-2xl flex flex-col items-center text-center animate-fade-in">
             {/* Logo Icon */}
-            <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center shadow-xl shadow-cyan-500/10 mb-6">
-              <svg className="h-8 w-8 text-slate-950 font-bold" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+            <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-[#1a56db] to-[#7bd0ff] flex items-center justify-center shadow-xl shadow-[#7bd0ff]/10 mb-6">
+              <svg className="h-8 w-8 text-[#11131b] font-bold" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
               </svg>
             </div>
 
             {/* Header Text */}
-            <h1 className="text-2xl font-extrabold tracking-tight text-slate-100">
+            <h1 className="text-2xl font-extrabold tracking-tight text-[#e2e1ed]">
               EXPENSE SCANNER
             </h1>
-            <p className="text-[10px] font-mono mt-1.5 px-3 py-1 rounded-full bg-slate-800 border border-slate-700/80 text-cyan-400 font-semibold tracking-wider uppercase">
+            <p className="text-[10px] font-mono mt-1.5 px-3 py-1 rounded-full bg-[#191b23] border border-[#434654]/80 text-[#7bd0ff] font-semibold tracking-wider uppercase">
               Vision OCR Agent Platform
             </p>
 
-            <p className="text-slate-400 text-sm mt-6 leading-relaxed max-w-sm">
+            <p className="text-[#c3c5d7] text-sm mt-6 leading-relaxed max-w-sm">
               Please sign in to access your scanned receipts, manage expenses, and view interactive spending dashboards.
             </p>
 
             {/* Google Sign In Button */}
             <button
               onClick={() => signIn("google")}
-              className="mt-8 w-full flex items-center justify-center space-x-3 bg-slate-100 hover:bg-white text-slate-900 font-semibold py-3 px-4 rounded-xl shadow-lg shadow-slate-950/20 hover:scale-[1.01] active:scale-[0.99] transition duration-200 cursor-pointer"
+              className="mt-8 w-full flex items-center justify-center space-x-3 bg-[#e2e1ed] hover:bg-white text-[#11131b] font-semibold py-3 px-4 rounded-xl shadow-lg shadow-[#11131b]/40 hover:scale-[1.01] active:scale-[0.99] transition duration-200 cursor-pointer"
             >
               {/* Google SVG Icon */}
               <svg className="h-5 w-5" viewBox="0 0 24 24">
@@ -70,14 +70,14 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
             </button>
 
             {/* Subtext info */}
-            <span className="text-[10px] text-slate-500 font-mono mt-8 uppercase tracking-widest">
+            <span className="text-[10px] text-[#c3c5d7]/40 font-mono mt-8 uppercase tracking-widest">
               Secure Unified OAuth 2.0 Identity
             </span>
           </div>
         </div>
 
         {/* Footer */}
-        <footer className="border-t border-slate-900/60 bg-slate-950/20 py-5 text-center text-xs text-slate-600 font-mono relative z-10">
+        <footer className="border-t border-[#1d1f27] bg-[#11131b]/20 py-5 text-center text-xs text-[#c3c5d7]/50 font-mono relative z-10">
           <p>Expense Scanner Agent Setup • Local host.docker.internal Gateway</p>
         </footer>
       </div>

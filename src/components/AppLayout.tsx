@@ -16,8 +16,11 @@ import {
   X,
   LogOut,
   ChevronDown,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useTheme } from "@/components/ThemeProvider";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -29,6 +32,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const { data: session } = useSession();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const { theme, toggleTheme } = useTheme();
 
   const navigation = [
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -184,6 +188,13 @@ export default function AppLayout({ children }: AppLayoutProps) {
             </button>
             <button className="p-1.5 text-sidebar-foreground/60 hover:text-sidebar-foreground transition hover:bg-sidebar-accent rounded-full">
               <HelpCircle className="h-4.5 w-4.5" />
+            </button>
+            <button
+              onClick={toggleTheme}
+              className="p-1.5 text-sidebar-foreground/60 hover:text-sidebar-foreground transition hover:bg-sidebar-accent rounded-full cursor-pointer"
+              aria-label="Toggle Theme"
+            >
+              {theme === "dark" ? <Sun className="h-4.5 w-4.5 text-amber-500" /> : <Moon className="h-4.5 w-4.5" />}
             </button>
 
             <span className="h-5 w-px bg-sidebar-border"></span>
