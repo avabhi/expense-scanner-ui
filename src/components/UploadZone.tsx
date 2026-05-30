@@ -74,20 +74,22 @@ export default function UploadZone({ onUploadSuccess, onUploadError }: UploadZon
       setStatus("uploading-s3");
       setProgress(60);
       
-      const formData = new FormData();
-      Object.entries(fields).forEach(([key, val]) => {
-        formData.append(key, val as string);
-      });
-      formData.append("file", file);
+       // Step 3: Direct Upload to S3/R2
+          setStatus("uploading-s3");
+          setProgress(60);
 
-      const s3Response = await fetch(uploadUrl, {
-        method: "POST",
-        body: formData,
-      });
+          // Send the raw file directly as the body (Do NOT use FormData or append fields)
+          const s3Response = await fetch(uploadUrl, {
+            method: "PUT",
+            body: file, // Send the file object directly
+            headers: {
+              "Content-Type": file.type || "application/octet-stream", // Set the correct mime-type
+            },
+          });
 
-      if (!s3Response.ok) {
-        throw new Error("Failed to upload receipt directly to storage.");
-      }
+          if (!s3Response.ok) {
+            throw new Error("Failed to upload receipt directly to storage.");
+          }
 
       // Step 4: Notify FastAPI backend (Ingest Receipt)
       setStatus("ingesting");
