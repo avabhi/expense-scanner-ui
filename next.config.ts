@@ -1,15 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  async rewrites() {
-    const backendUrl = process.env.BACKEND_API_URL || "http://localhost:8000";
-    return [
-      {
-        source: "/api/v1/:path*",
-        destination: `${backendUrl}/api/v1/:path*`,
-      },
-    ];
-  },
+  allowedDevOrigins: ["f76b-2406-7400-63-5693-1870-57b2-e8dd-127e.ngrok-free.app"],
 };
 
 export default nextConfig;

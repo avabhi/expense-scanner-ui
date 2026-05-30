@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useRef } from "react";
+import { BACKEND_URL } from "@/lib/config";
 
 interface ProgressTrackerProps {
   jobId: string;
@@ -30,7 +31,7 @@ export default function ProgressTracker({ jobId, onComplete, onFailure }: Progre
     }
 
     // Connect directly to FastAPI SSE stream (bypassing Next.js proxy buffering)
-    const eventSource = new EventSource(`http://localhost:8000/api/v1/receipts/status/${jobId}`);
+    const eventSource = new EventSource(`${BACKEND_URL}/api/v1/receipts/status/${jobId}`);
 
     eventSource.onmessage = (event) => {
       try {

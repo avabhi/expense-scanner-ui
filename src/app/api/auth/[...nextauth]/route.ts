@@ -1,5 +1,6 @@
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
+import { BACKEND_URL } from "@/lib/config";
 
 const handler = NextAuth({
   providers: [
@@ -15,7 +16,7 @@ const handler = NextAuth({
         
         // Exchange Google ID Token for our Backend JWT
         try {
-          const res = await fetch("http://localhost:8000/api/v1/auth/google", {
+          const res = await fetch(`${BACKEND_URL}/api/v1/auth/google`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",

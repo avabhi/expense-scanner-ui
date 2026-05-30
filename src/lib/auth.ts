@@ -1,4 +1,5 @@
 import { getSession, signOut } from "next-auth/react";
+import { BACKEND_URL } from "./config";
 
 /**
  * A wrapper around the native fetch API that automatically appends the
@@ -15,7 +16,10 @@ export async function fetchWithAuth(url: string, options: RequestInit = {}): Pro
     headers.set("Authorization", `Bearer ${token}`);
   }
 
-  const response = await fetch(url, {
+  const cleanUrl = url.startsWith("/") ? url : `/${url}`;
+  const targetUrl = url.startsWith("http") ? url : `${BACKEND_URL}${cleanUrl}`;
+
+  const response = await fetch(targetUrl, {
     ...options,
     headers,
   });
