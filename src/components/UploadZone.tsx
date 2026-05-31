@@ -68,28 +68,39 @@ export default function UploadZone({ onUploadSuccess, onUploadError }: UploadZon
       }
       
       const uploadDetails = await urlResponse.json();
-      const { url: uploadUrl, fields, object_key } = uploadDetails;
+      const { url: uploadUrl, method = "POST", fields = {}, object_key } = uploadDetails;
 
-      // Step 3: Direct Upload to S3/MinIO
+      // Step 3: Direct Upload to S3/MinIO or R2
       setStatus("uploading-s3");
       setProgress(60);
       
-       // Step 3: Direct Upload to S3/R2
-          setStatus("uploading-s3");
-          setProgress(60);
+      let s3Response;
+      if (method === "PUT") {
+        // Production Cloudflare R2 raw binary PUT upload
+        s3Response = await fetch(uploadUrl, {
+          method: "PUT",
+          body: file,
+          headers: {
+            "Content-Type": file.type || "application/octet-stream",
+          },
+        });
+      } else {
+        // Local Dev MinIO multipart form-data upload
+        const formData = new FormData();
+        Object.entries(fields).forEach(([key, val]) => {
+          formData.append(key, val as string);
+        });
+        formData.append("file", file);
 
-          // Send the raw file directly as the body (Do NOT use FormData or append fields)
-          const s3Response = await fetch(uploadUrl, {
-            method: "PUT",
-            body: file, // Send the file object directly
-            headers: {
-              "Content-Type": file.type || "application/octet-stream", // Set the correct mime-type
-            },
-          });
+        s3Response = await fetch(uploadUrl, {
+          method: "POST",
+          body: formData,
+        });
+      }
 
-          if (!s3Response.ok) {
-            throw new Error("Failed to upload receipt directly to storage.");
-          }
+      if (!s3Response.ok) {
+        throw new Error("Failed to upload receipt directly to storage.");
+      }
 
       // Step 4: Notify FastAPI backend (Ingest Receipt)
       setStatus("ingesting");
