@@ -1,7 +1,10 @@
 "use client";
 
-import React, { useEffect, useState, useMemo } from "react";
-import { fetchWithAuth } from "@/lib/auth";
+import React, { useState, useMemo } from "react";
+import { useCategoriesQuery } from "@/features/categories/hooks";
+import { useReceiptQuery } from "@/features/receipts/hooks";
+import { CATEGORY_ICONS } from "@/features/categories/constants";
+import type { ReceiptRef, Receipt as DetailedReceipt, LineItem } from "@/features/receipts/types";
 import AppLayout from "@/components/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -31,61 +34,11 @@ import {
   Coffee,
   Receipt,
   FileSpreadsheet,
-  LucideIcon,
 } from "lucide-react";
 
-interface ReceiptRef {
-  receipt_id: string;
-  merchant_name: string | null;
-  date: string | null;
-  total_amount: number | null;
-  currency: string | null;
-  category?: string;
-  status?: string;
-}
-
-interface CategorySummary {
-  category: string;
-  total_spent: number;
-  item_count: number;
-  receipts: ReceiptRef[];
-}
-
-interface LineItem {
-  id: string;
-  description: string;
-  price: number;
-  category: string | null;
-}
-
-interface DetailedReceipt {
-  id: string;
-  merchant_name: string | null;
-  date: string | null;
-  total_amount: number | null;
-  currency: string | null;
-  status: string;
-  line_items: LineItem[];
-}
-
-const CATEGORY_ICONS: Record<string, LucideIcon> = {
-  "Food & Dining": Coffee,
-  "Groceries": ShoppingBag,
-  "Transport": Car,
-  "Travel": Plane,
-  "Travel & Lodging": Plane,
-  "Lodging": Hotel,
-  "Office Supplies": Briefcase,
-  "Software / SaaS": Database,
-  "Cloud Infrastructure": Database,
-  "Other": Coins,
-};
-
 export default function HistoryPage() {
-  const [loading, setLoading] = useState(true);
-  const [receipts, setReceipts] = useState<ReceiptRef[]>([]);
-  const [categories, setCategories] = useState<string[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  // React Query hook for fetching data
+  const { data: summaries = [], isLoading, error } = useCategoriesQuery();
 
   // Filters State
   const [searchTerm, setSearchTerm] = useState("");
@@ -95,82 +48,37 @@ export default function HistoryPage() {
 
   // Modal State
   const [selectedReceiptId, setSelectedReceiptId] = useState<string | null>(null);
-  const [detailedReceipt, setDetailedReceipt] = useState<DetailedReceipt | null>(null);
-  const [detailLoading, setDetailLoading] = useState(false);
-  const [detailError, setDetailError] = useState<string | null>(null);
+
+  // React Query hook for fetching receipt details when modal opens
+  const { data: detailedReceipt, isLoading: detailLoading, error: detailError } = useReceiptQuery(selectedReceiptId);
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  useEffect(() => {
-    async function load() {
-      try {
-        setLoading(true);
-        const res = await fetchWithAuth("/api/v1/categories/summary");
-        if (!res.ok) throw new Error("Failed to load history data.");
-        const json: CategorySummary[] = await res.json();
+  // Derive categories and receipts from summaries
+  const categories = useMemo(() => summaries.map((c) => c.category), [summaries]);
 
-        // Distinct categories
-        const distinctCats = json.map((c) => c.category);
-        setCategories(distinctCats);
+  const receipts = useMemo(() => {
+    const uniqueReceiptsMap: Record<string, ReceiptRef> = {};
+    summaries.forEach((catSummary) => {
+      catSummary.receipts.forEach((r) => {
+        if (!uniqueReceiptsMap[r.receipt_id]) {
+          uniqueReceiptsMap[r.receipt_id] = {
+            ...r,
+            category: catSummary.category,
+            status: "completed",
+          };
+        }
+      });
+    });
 
-        // Deduplicate and gather all receipts across categories
-        const uniqueReceiptsMap: Record<string, ReceiptRef> = {};
-        json.forEach((catSummary) => {
-          catSummary.receipts.forEach((r) => {
-            if (!uniqueReceiptsMap[r.receipt_id]) {
-              uniqueReceiptsMap[r.receipt_id] = {
-                ...r,
-                category: catSummary.category,
-                status: "completed",
-              };
-            }
-          });
-        });
-
-        // Convert map to list and sort by date descending
-        const allReceipts = Object.values(uniqueReceiptsMap).sort((a, b) => {
-          const dateA = a.date ? new Date(a.date).getTime() : 0;
-          const dateB = b.date ? new Date(b.date).getTime() : 0;
-          return dateB - dateA;
-        });
-
-        setReceipts(allReceipts);
-      } catch (e) {
-        setError(e instanceof Error ? e.message : "An unexpected error occurred.");
-      } finally {
-        setLoading(false);
-      }
-    }
-    load();
-  }, []);
-
-  // Fetch full details when modal opens
-  useEffect(() => {
-    if (!selectedReceiptId) {
-      const timer = setTimeout(() => {
-        setDetailedReceipt(null);
-      }, 0);
-      return () => clearTimeout(timer);
-    }
-
-    async function loadDetails() {
-      try {
-        setDetailLoading(true);
-        setDetailError(null);
-        const res = await fetchWithAuth(`/api/v1/receipts/${selectedReceiptId}`);
-        if (!res.ok) throw new Error("Failed to load receipt line items.");
-        const json: DetailedReceipt = await res.json();
-        setDetailedReceipt(json);
-      } catch (e) {
-        setDetailError(e instanceof Error ? e.message : "An unexpected error occurred.");
-      } finally {
-        setDetailLoading(false);
-      }
-    }
-    loadDetails();
-  }, [selectedReceiptId]);
+    return Object.values(uniqueReceiptsMap).sort((a, b) => {
+      const dateA = a.date ? new Date(a.date).getTime() : 0;
+      const dateB = b.date ? new Date(b.date).getTime() : 0;
+      return dateB - dateA;
+    });
+  }, [summaries]);
 
   // Filter Logic
   const filteredReceipts = useMemo(() => {
@@ -254,7 +162,7 @@ export default function HistoryPage() {
         {error && (
           <div className="p-4 rounded-xl border border-red-500/20 bg-red-500/5 text-red-500 text-center flex items-center justify-center gap-2">
             <AlertCircle className="h-5 w-5" />
-            <span className="text-sm font-semibold">{error}</span>
+            <span className="text-sm font-semibold">{error.message}</span>
           </div>
         )}
 
@@ -378,7 +286,7 @@ export default function HistoryPage() {
         {/* Data Table */}
         <Card className="bg-card border-border shadow-sm">
           <CardContent className="p-0">
-            {loading ? (
+            {isLoading ? (
               <div className="flex flex-col items-center justify-center py-24 space-y-3">
                 <div className="relative w-10 h-10">
                   <div className="absolute inset-0 rounded-full border-4 border-muted" />
@@ -552,7 +460,7 @@ export default function HistoryPage() {
                 <AlertCircle className="h-10 w-10 text-red-500 mx-auto" />
                 <div>
                   <p className="text-sm font-bold text-red-500">Failed to load detailed record</p>
-                  <p className="text-xs text-muted-foreground mt-1">{detailError}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{detailError.message}</p>
                 </div>
                 <Button onClick={() => setSelectedReceiptId(null)} className="bg-secondary text-foreground">
                   Close

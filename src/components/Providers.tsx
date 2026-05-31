@@ -3,11 +3,14 @@
 import React from "react";
 import { SessionProvider } from "next-auth/react";
 import { ThemeProvider } from "./ThemeProvider";
+import { QueryProvider } from "./providers/QueryProvider";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <ThemeProvider>
-      <SessionProvider>{children}</SessionProvider>
-    </ThemeProvider>
+    <QueryProvider>
+      <ThemeProvider>
+        <SessionProvider>{children}</SessionProvider>
+      </ThemeProvider>
+    </QueryProvider>
   );
 }

@@ -1,7 +1,9 @@
 "use client";
 
-import React, { useEffect, useState, useMemo } from "react";
-import { fetchWithAuth } from "@/lib/auth";
+import React, { useMemo } from "react";
+import { useCategoriesQuery } from "@/features/categories/hooks";
+import { CATEGORY_BUDGETS } from "@/features/categories/constants";
+import type { ReceiptRef } from "@/features/receipts/types";
 import AppLayout from "@/components/AppLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -40,88 +42,38 @@ ChartJS.register(
   Filler
 );
 
-interface ReceiptRef {
-  receipt_id: string;
-  merchant_name: string | null;
-  date: string | null;
-  total_amount: number | null;
-  currency: string | null;
-  category?: string;
-  status?: string;
-}
-
-interface CategorySummary {
-  category: string;
-  total_spent: number;
-  item_count: number;
-  receipts: ReceiptRef[];
-}
-
-
-
-// Colour palette aligned with ReceiptResult badges
-const CATEGORY_COLORS: Record<string, string> = {
-  "Food & Dining": "#f97316", // orange-500
-  "Groceries": "#22c55e",     // green-500
-  "Transport": "#3b82f6",     // blue-500
-  "Health & Pharmacy": "#ef4444", // red-500
-  "Electronics & Tech": "#06b6d4", // cyan-500
-  "Clothing & Apparel": "#a855f7", // purple-500
-  "Entertainment": "#ec4899", // pink-500
-  "Utilities & Bills": "#eab308", // yellow-500
-  "Personal Care": "#f43f5e",   // rose-500
-  "Other": "#64748b",           // slate-500
-};
-
-const CATEGORY_BUDGETS: Record<string, number> = {
-  "Food & Dining": 300,
-  "Groceries": 500,
-  "Transport": 150,
-  "Office Supplies": 1000,
-  "Software / SaaS": 2500,
-  "Cloud Infrastructure": 4000,
-  "Other": 400,
+// Chart color mapping (hex colors for Chart.js)
+const CATEGORY_CHART_COLORS: Record<string, string> = {
+  "Food & Dining": "#f97316",
+  "Groceries": "#22c55e",
+  "Transport": "#3b82f6",
+  "Health & Pharmacy": "#ef4444",
+  "Electronics & Tech": "#06b6d4",
+  "Clothing & Apparel": "#a855f7",
+  "Entertainment": "#ec4899",
+  "Utilities & Bills": "#eab308",
+  "Personal Care": "#f43f5e",
+  "Other": "#64748b",
 };
 
 export default function ReportsPage() {
-  const [loading, setLoading] = useState(true);
-  const [summaries, setSummaries] = useState<CategorySummary[]>([]);
-  const [receipts, setReceipts] = useState<ReceiptRef[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  const { data: summaries = [], isLoading, error } = useCategoriesQuery();
 
-  useEffect(() => {
-    async function load() {
-      try {
-        setLoading(true);
-        const res = await fetchWithAuth("/api/v1/categories/summary");
-        if (!res.ok) throw new Error("Failed to load reports data.");
-        const json: CategorySummary[] = await res.json();
-        setSummaries(json);
-
-        // Deduplicate and gather all receipts across categories
-        const uniqueReceiptsMap: Record<string, ReceiptRef> = {};
-        json.forEach((catSummary) => {
-          catSummary.receipts.forEach((r) => {
-            if (!uniqueReceiptsMap[r.receipt_id]) {
-              uniqueReceiptsMap[r.receipt_id] = {
-                ...r,
-                category: catSummary.category,
-                status: "completed",
-              };
-            }
-          });
-        });
-
-        const allReceipts = Object.values(uniqueReceiptsMap);
-        setReceipts(allReceipts);
-      } catch (e) {
-        setError(e instanceof Error ? e.message : "An unexpected error occurred.");
-      } finally {
-        setLoading(false);
-      }
-    }
-    load();
-  }, []);
+  const receipts = useMemo(() => {
+    const uniqueReceiptsMap: Record<string, ReceiptRef> = {};
+    summaries.forEach((catSummary) => {
+      catSummary.receipts.forEach((r) => {
+        if (!uniqueReceiptsMap[r.receipt_id]) {
+          uniqueReceiptsMap[r.receipt_id] = {
+            ...r,
+            category: catSummary.category,
+            status: "completed",
+          };
+        }
+      });
+    });
+    return Object.values(uniqueReceiptsMap);
+  }, [summaries]);
 
   const totalSpent = useMemo(() => {
     return summaries.reduce((s, c) => s + c.total_spent, 0);
@@ -135,7 +87,7 @@ export default function ReportsPage() {
         {
           data: summaries.map((c) => c.total_spent),
           backgroundColor: summaries.map(
-            (c) => CATEGORY_COLORS[c.category] || "#64748b"
+            (c) => CATEGORY_CHART_COLORS[c.category] || "#64748b"
           ),
           borderColor: "rgba(255, 255, 255, 0.05)",
           borderWidth: 2,
@@ -277,7 +229,7 @@ export default function ReportsPage() {
           </Button>
         </div>
 
-        {loading && (
+        {isLoading && (
           <div className="flex flex-col items-center justify-center py-24 space-y-3">
             <div className="relative w-10 h-10">
               <div className="absolute inset-0 rounded-full border-4 border-muted" />
@@ -290,11 +242,11 @@ export default function ReportsPage() {
         {error && (
           <div className="p-4 rounded-xl border border-red-500/20 bg-red-500/5 text-red-500 text-center flex items-center justify-center gap-2">
             <AlertCircle className="h-5 w-5" />
-            <span className="text-sm font-semibold">{error}</span>
+            <span className="text-sm font-semibold">{error.message}</span>
           </div>
         )}
 
-        {!loading && !error && (
+        {!isLoading && !error && (
           <>
             {/* Donut Chart & Trend Line Chart */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -319,7 +271,7 @@ export default function ReportsPage() {
 
                   <div className="grid grid-cols-2 gap-x-6 gap-y-2 mt-6 w-full text-xs">
                     {summaries.slice(0, 4).map((c) => {
-                      const col = CATEGORY_COLORS[c.category] || "#64748b";
+                      const col = CATEGORY_CHART_COLORS[c.category] || "#64748b";
                       const pct = totalSpent > 0 ? ((c.total_spent / totalSpent) * 100).toFixed(0) : "0";
                       return (
                         <div key={c.category} className="flex items-center gap-1.5 min-w-0">
