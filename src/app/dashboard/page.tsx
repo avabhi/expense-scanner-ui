@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useMemo } from "react";
+import { useCurrency } from "@/components/CurrencyProvider";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -72,6 +73,7 @@ ChartJS.register(
 export default function Dashboard() {
   const router = useRouter();
   const { data: session } = useSession();
+  const { currencySymbol, formatAmount } = useCurrency();
 
   // Single React Query hook replaces all the useEffect/useState logic
   const { data: summaries = [], isLoading, error } = useCategoriesQuery();
@@ -129,7 +131,7 @@ export default function Dashboard() {
     datasets: [
       {
         fill: true,
-        label: "Daily Spend ($)",
+        label: `Daily Spend (${currencySymbol})`,
         data: chartValues,
         borderColor: "#1a56db", // Stitch primary blue
         backgroundColor: "rgba(26, 86, 219, 0.05)",
@@ -284,7 +286,7 @@ export default function Dashboard() {
                     </Badge>
                   </div>
                   <p className="text-3xl font-extrabold text-foreground mt-4 font-mono">
-                    ${totalSpent.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    {formatAmount(totalSpent)}
                   </p>
                 </CardContent>
               </Card>
@@ -318,7 +320,7 @@ export default function Dashboard() {
                   </div>
                   <div className="mt-4 space-y-2">
                     <p className="text-2xl font-black text-foreground font-mono">
-                      $3,000.00 / <span className="text-muted-foreground text-sm font-normal">$5,000</span>
+                      {currencySymbol}3,000.00 / <span className="text-muted-foreground text-sm font-normal">{currencySymbol}5,000</span>
                     </p>
                     <Progress value={60} className="h-1.5 bg-muted" />
                   </div>
@@ -407,7 +409,7 @@ export default function Dashboard() {
                                 </Badge>
                               </TableCell>
                               <TableCell className="py-4 text-right font-black font-mono text-foreground text-xs pr-10">
-                                ${(r.total_amount || 0).toFixed(2)}
+                                {formatAmount(r.total_amount || 0, r.currency)}
                               </TableCell>
                               <TableCell className="py-4 text-center pr-6">
                                 <Badge className="bg-emerald-500/10 hover:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-none font-bold text-[10px] rounded-full px-2.5 py-0.5">

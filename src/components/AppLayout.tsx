@@ -21,6 +21,14 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/components/ThemeProvider";
+import { useCurrency } from "@/components/CurrencyProvider";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -33,6 +41,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
+  const { currency, setCurrency, supportedCurrencies } = useCurrency();
 
   const navigation = [
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -196,6 +205,22 @@ export default function AppLayout({ children }: AppLayoutProps) {
             >
               {theme === "dark" ? <Sun className="h-4.5 w-4.5 text-amber-500" /> : <Moon className="h-4.5 w-4.5" />}
             </button>
+
+            <span className="h-5 w-px bg-sidebar-border"></span>
+
+            <Select value={currency} onValueChange={setCurrency}>
+              <SelectTrigger size="sm" className="h-7 text-xs font-mono font-bold bg-background border-sidebar-border focus:ring-1 focus:ring-primary/20 w-fit shrink-0 cursor-pointer">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {supportedCurrencies.map((c) => (
+                  <SelectItem key={c.code} value={c.code} className="text-xs font-mono cursor-pointer">
+                    <span className="font-sans mr-1">{c.symbol}</span>
+                    <span>{c.code}</span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
             <span className="h-5 w-px bg-sidebar-border"></span>
 

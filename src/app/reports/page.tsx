@@ -16,6 +16,7 @@ import {
   ShoppingBag,
 } from "lucide-react";
 import { Doughnut, Line } from "react-chartjs-2";
+import { useCurrency } from "@/components/CurrencyProvider";
 import {
   Chart as ChartJS,
   ArcElement,
@@ -57,6 +58,7 @@ const CATEGORY_CHART_COLORS: Record<string, string> = {
 };
 
 export default function ReportsPage() {
+  const { currencySymbol, formatAmount } = useCurrency();
   const { data: summaries = [], isLoading, error } = useCategoriesQuery();
 
   const receipts = useMemo(() => {
@@ -114,7 +116,7 @@ export default function ReportsPage() {
           label: (ctx: TooltipItem<"doughnut">) => {
             const val = typeof ctx.raw === "number" ? ctx.raw : 0;
             const pct = totalSpent > 0 ? ((val / totalSpent) * 100).toFixed(1) : "0";
-            return ` $${val.toFixed(2)} (${pct}%)`;
+            return ` ${currencySymbol}${val.toFixed(2)} (${pct}%)`;
           },
         },
       },
@@ -264,7 +266,7 @@ export default function ReportsPage() {
                     <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                       <p className="text-[10px] text-muted-foreground font-mono uppercase tracking-wider">Spent</p>
                       <p className="text-xl font-black text-primary font-mono mt-0.5">
-                        ${totalSpent.toLocaleString("en-US", { maximumFractionDigits: 0 })}
+                        {formatAmount(totalSpent)}
                       </p>
                     </div>
                   </div>
@@ -367,9 +369,9 @@ export default function ReportsPage() {
                           </div>
                           <p className="font-mono text-muted-foreground font-bold">
                             <span className={isExceeded ? "text-red-500" : "text-foreground"}>
-                              ${val.toFixed(0)}
+                              {formatAmount(val)}
                             </span>{" "}
-                            / <span className="text-muted-foreground/60">${budget}</span>
+                            / <span className="text-muted-foreground/60">{formatAmount(budget)}</span>
                           </p>
                         </div>
                         <Progress
@@ -378,7 +380,7 @@ export default function ReportsPage() {
                         />
                         {isExceeded && (
                           <p className="text-[10px] text-red-500 font-bold font-mono">
-                            Exceeded by ${(val - budget).toFixed(2)}
+                            Exceeded by {formatAmount(val - budget)}
                           </p>
                         )}
                       </div>
@@ -393,12 +395,12 @@ export default function ReportsPage() {
               <CardHeader>
                 <CardTitle className="text-base font-bold text-foreground">Recent Large Transactions</CardTitle>
                 <CardDescription className="text-muted-foreground text-xs">
-                  Scanned items with values exceeding $100.00
+                  Scanned items with values exceeding {formatAmount(100)}
                 </CardDescription>
               </CardHeader>
               <CardContent className="pt-2">
                 {largeTransactions.length === 0 ? (
-                  <p className="text-xs text-muted-foreground py-6 text-center">No transaction exceeds $100.00 yet.</p>
+                  <p className="text-xs text-muted-foreground py-6 text-center">No transaction exceeds {formatAmount(100)} yet.</p>
                 ) : (
                   <div className="overflow-x-auto border border-border rounded-xl">
                     <Table>
@@ -444,7 +446,7 @@ export default function ReportsPage() {
                               </Badge>
                             </TableCell>
                             <TableCell className="py-4 text-right font-black font-mono text-foreground text-xs pr-6">
-                              ${(t.total_amount || 0).toFixed(2)}
+                              {formatAmount(t.total_amount || 0, t.currency)}
                             </TableCell>
                           </TableRow>
                         ))}

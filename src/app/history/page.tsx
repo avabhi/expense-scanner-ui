@@ -12,6 +12,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useTheme } from "@/components/ThemeProvider";
+import { useCurrency } from "@/components/CurrencyProvider";
 import { Slider } from "@/components/ui/slider";
 import {
   Dialog,
@@ -48,6 +50,10 @@ export default function HistoryPage() {
 
   // Modal State
   const [selectedReceiptId, setSelectedReceiptId] = useState<string | null>(null);
+
+  // Theme and Currency hooks
+  const { theme } = useTheme();
+  const { currencySymbol, formatAmount, getCurrencySymbol } = useCurrency();
 
   // React Query hook for fetching receipt details when modal opens
   const { data: detailedReceipt, isLoading: detailLoading, error: detailError } = useReceiptQuery(selectedReceiptId);
@@ -115,16 +121,6 @@ export default function HistoryPage() {
     setCurrentPage(1);
   };
 
-  const getCurrencySymbol = (code: string | null) => {
-    if (!code) return "$";
-    switch (code.toUpperCase()) {
-      case "USD": return "$";
-      case "EUR": return "€";
-      case "GBP": return "£";
-      case "INR": return "₹";
-      default: return code + " ";
-    }
-  };
 
   return (
     <AppLayout>
@@ -264,7 +260,7 @@ export default function HistoryPage() {
             <div className="space-y-2">
               <div className="flex justify-between items-center text-xs">
                 <Label className="font-bold text-muted-foreground">Max Spend</Label>
-                <span className="font-mono font-bold text-primary">${maxAmount.toLocaleString()}</span>
+                <span className="font-mono font-bold text-primary">{currencySymbol}{maxAmount.toLocaleString()}</span>
               </div>
               <div className="pt-2">
                 <Slider

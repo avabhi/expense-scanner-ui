@@ -9,6 +9,7 @@ import AppLayout from "@/components/AppLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/components/ThemeProvider";
+import { useCurrency } from "@/components/CurrencyProvider";
 import {
   Chart as ChartJS,
   ArcElement,
@@ -22,21 +23,12 @@ import { AlertCircle, ChevronDown } from "lucide-react";
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-function getCurrencySymbol(code: string | null) {
-  if (!code) return "$";
-  switch (code.toUpperCase()) {
-    case "USD": return "$";
-    case "EUR": return "€";
-    case "GBP": return "£";
-    case "INR": return "₹";
-    default: return code + " ";
-  }
-}
 
 export default function CategoriesPage() {
   const { data: summaries = [], isLoading, error } = useCategoriesQuery();
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const { theme } = useTheme();
+  const { currencySymbol, formatAmount, getCurrencySymbol } = useCurrency();
 
   const totalSpent = useMemo(() => summaries.reduce((s, c) => s + c.total_spent, 0), [summaries]);
 
@@ -72,7 +64,7 @@ export default function CategoriesPage() {
         callbacks: {
           label: (ctx) => {
             const pct = totalSpent > 0 ? ((ctx.parsed / totalSpent) * 100).toFixed(1) : "0";
-            return `  $${ctx.parsed.toFixed(2)}  (${pct}%)`;
+            return `  ${currencySymbol}${ctx.parsed.toFixed(2)}  (${pct}%)`;
           },
         },
       },
@@ -140,7 +132,7 @@ export default function CategoriesPage() {
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                   <p className="text-[10px] text-muted-foreground font-mono uppercase tracking-wider">Total Spent</p>
                   <p className="text-2xl font-black text-primary font-mono mt-0.5">
-                    ${totalSpent.toFixed(2)}
+                    {formatAmount(totalSpent)}
                   </p>
                 </div>
               </div>
@@ -158,7 +150,7 @@ export default function CategoriesPage() {
                       </div>
                       <div className="flex items-center gap-3 font-mono">
                         <span className="text-muted-foreground">{pct}%</span>
-                        <span className={`font-semibold ${colors.text}`}>${c.total_spent.toFixed(2)}</span>
+                        <span className={`font-semibold ${colors.text}`}>{formatAmount(c.total_spent)}</span>
                       </div>
                     </div>
                   );
@@ -194,7 +186,7 @@ export default function CategoriesPage() {
                       </div>
                       <div className="flex items-center gap-4">
                         <div className="text-right">
-                          <p className={`text-sm font-black font-mono text-foreground`}>${c.total_spent.toFixed(2)}</p>
+                          <p className={`text-sm font-black font-mono text-foreground`}>{formatAmount(c.total_spent)}</p>
                           <p className="text-[10px] text-muted-foreground font-mono">{pct}% of total</p>
                         </div>
                         <ChevronDown

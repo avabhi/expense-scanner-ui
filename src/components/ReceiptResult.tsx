@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertTriangle } from "lucide-react";
+import { useCurrency } from "@/components/CurrencyProvider";
 
 interface LineItem {
   id: number;
@@ -69,6 +70,7 @@ export default function ReceiptResult({ receiptId, imageUrl, onReset }: ReceiptR
   const [confirming, setConfirming] = useState(false);
   const [editTotal, setEditTotal] = useState(false);
   const [correctedTotalVal, setCorrectedTotalVal] = useState<string>("");
+  const { getCurrencySymbol } = useCurrency();
 
   const handleConfirm = async (confirmed: boolean, correctedVal?: number) => {
     try {
@@ -158,16 +160,6 @@ export default function ReceiptResult({ receiptId, imageUrl, onReset }: ReceiptR
     );
   }
 
-  const getCurrencySymbol = (code: string | null) => {
-    if (!code) return "$";
-    switch (code.toUpperCase()) {
-      case "USD": return "$";
-      case "EUR": return "€";
-      case "GBP": return "£";
-      case "INR": return "₹";
-      default: return code + " ";
-    }
-  };
 
   // Summarise spending by category for this receipt
   const categoryTotals: Record<string, number> = {};
