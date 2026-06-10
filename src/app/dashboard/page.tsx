@@ -308,7 +308,7 @@ export default function Dashboard() {
                 </CardContent>
               </Card>
 
-              <Card className="bg-card border-border shadow-md">
+              {/* <Card className="bg-card border-border shadow-md">
                 <CardContent className="p-6 flex flex-col justify-between">
                   <div className="flex justify-between items-start">
                     <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
@@ -325,7 +325,7 @@ export default function Dashboard() {
                     <Progress value={60} className="h-1.5 bg-muted" />
                   </div>
                 </CardContent>
-              </Card>
+              </Card> */}
             </div>
 
             {/* Recent Activity */}
