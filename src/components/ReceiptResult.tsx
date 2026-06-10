@@ -22,6 +22,9 @@ interface ReceiptData {
   total_amount: number | null;
   currency: string | null;
   status: string;
+  confirmed: boolean;
+  total_matches: boolean;
+  line_items_sum: number;
   line_items: LineItem[];
 }
 
@@ -63,6 +66,49 @@ export default function ReceiptResult({ receiptId, imageUrl, onReset }: ReceiptR
   const [data, setData] = useState<ReceiptData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState(false);
+  const [editTotal, setEditTotal] = useState(false);
+  const [correctedTotalVal, setCorrectedTotalVal] = useState<string>("");
+
+  const handleConfirm = async (confirmed: boolean, correctedVal?: number) => {
+    try {
+      setConfirming(true);
+      const payload: { confirmed: boolean; corrected_total?: number } = { confirmed };
+      if (correctedVal !== undefined) {
+        payload.corrected_total = correctedVal;
+      }
+      
+      const response = await fetchWithAuth(`/api/v1/receipts/${receiptId}/confirm`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      
+      if (!response.ok) {
+        throw new Error("Failed to confirm receipt.");
+      }
+      
+      const json = await response.json();
+      
+      // Update local state
+      setData(prev => prev ? {
+        ...prev,
+        confirmed: confirmed,
+        status: json.status,
+        total_amount: json.total_amount !== undefined ? json.total_amount : prev.total_amount
+      } : null);
+      
+      if (!confirmed) {
+        // If rejected, go back to upload step
+        onReset();
+      }
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Error confirming receipt");
+    } finally {
+      setConfirming(false);
+      setEditTotal(false);
+    }
+  };
 
   useEffect(() => {
     async function fetchReceiptData() {
@@ -170,6 +216,108 @@ export default function ReceiptResult({ receiptId, imageUrl, onReset }: ReceiptR
 
         {/* Right Column: Parsed Data */}
         <div className="lg:col-span-7 space-y-6">
+          {/* User Confirmation Banner */}
+          {!data.confirmed && (
+            <Card className="bg-yellow-500/5 border-yellow-500/20 shadow-sm">
+              <CardContent className="p-5 space-y-4">
+                <div className="flex items-start space-x-3">
+                  {data.total_matches ? (
+                    <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-500 shrink-0">
+                      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                  ) : (
+                    <div className="p-2 rounded-xl bg-amber-500/10 text-amber-500 shrink-0">
+                      <AlertTriangle className="h-5 w-5" />
+                    </div>
+                  )}
+                  
+                  <div className="space-y-0.5 flex-1">
+                    <h4 className="text-sm font-bold text-foreground">
+                      {data.total_matches ? "Verification Successful" : "Total Mismatch Detected"}
+                    </h4>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      {data.total_matches 
+                        ? `The receipt total (${getCurrencySymbol(data.currency)}${data.total_amount?.toFixed(2)}) matches the sum of the line items.` 
+                        : `The printed total (${getCurrencySymbol(data.currency)}${data.total_amount?.toFixed(2)}) does not match the sum of line items (${getCurrencySymbol(data.currency)}${data.line_items_sum?.toFixed(2)}).`
+                      }
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-border/40">
+                  <div className="flex items-center gap-2">
+                    <button
+                      disabled={confirming}
+                      onClick={() => handleConfirm(true)}
+                      className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white rounded-xl text-xs font-bold shadow-md transition duration-200"
+                    >
+                      {confirming ? "Saving..." : "Confirm & Save"}
+                    </button>
+                    
+                    {!data.total_matches && data.line_items_sum > 0 && (
+                      <button
+                        disabled={confirming}
+                        onClick={() => handleConfirm(true, data.line_items_sum)}
+                        className="px-3 py-2 bg-secondary hover:bg-secondary/95 text-foreground rounded-xl text-xs font-semibold transition"
+                      >
+                        Use Sum ({getCurrencySymbol(data.currency)}{data.line_items_sum.toFixed(2)})
+                      </button>
+                    )}
+
+                    <button
+                      disabled={confirming}
+                      onClick={() => {
+                        setEditTotal(!editTotal);
+                        if (data.total_amount !== null) {
+                          setCorrectedTotalVal(data.total_amount.toString());
+                        }
+                      }}
+                      className="px-3 py-2 bg-secondary hover:bg-secondary/95 text-foreground rounded-xl text-xs font-semibold transition"
+                    >
+                      {editTotal ? "Cancel Edit" : "Edit Total"}
+                    </button>
+                  </div>
+
+                  <button
+                    disabled={confirming}
+                    onClick={() => handleConfirm(false)}
+                    className="px-3 py-2 text-red-500 hover:bg-red-500/10 rounded-xl text-xs font-bold transition"
+                  >
+                    Reject Receipt
+                  </button>
+                </div>
+
+                {editTotal && (
+                  <div className="flex items-center gap-2 mt-3 pt-3 border-t border-dashed border-border/40 animate-fade-in">
+                    <span className="text-xs text-muted-foreground font-mono">{getCurrencySymbol(data.currency)}</span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={correctedTotalVal}
+                      onChange={(e) => setCorrectedTotalVal(e.target.value)}
+                      className="bg-muted border border-border rounded-lg px-3 py-1.5 text-xs font-bold w-24 text-foreground focus:outline-none focus:border-primary"
+                      placeholder="0.00"
+                    />
+                    <button
+                      disabled={confirming || !correctedTotalVal}
+                      onClick={() => {
+                        const val = parseFloat(correctedTotalVal);
+                        if (!isNaN(val)) {
+                          handleConfirm(true, val);
+                        }
+                      }}
+                      className="px-3 py-1.5 bg-primary hover:bg-primary/95 text-primary-foreground rounded-lg text-xs font-bold transition shadow-sm"
+                    >
+                      Save Correction
+                    </button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
           {/* Main Stats Card */}
           <Card className="bg-card border-border">
             <CardContent className="p-6">

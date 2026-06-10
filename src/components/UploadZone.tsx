@@ -3,6 +3,14 @@
 import React, { useState, useRef } from "react";
 import { computeFileHash } from "@/lib/utils";
 import { fetchWithAuth } from "@/lib/auth";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 interface UploadZoneProps {
   onUploadSuccess: (jobId: string, receiptId: string, imageUrl: string) => void;
@@ -15,6 +23,12 @@ export default function UploadZone({ onUploadSuccess, onUploadError }: UploadZon
   const [progress, setProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Currency prompt states
+  const [showCurrencyModal, setShowCurrencyModal] = useState(false);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [selectedCurrency, setSelectedCurrency] = useState<string>("auto");
+  const [customCurrency, setCustomCurrency] = useState<string>("");
+
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(true);
@@ -24,20 +38,33 @@ export default function UploadZone({ onUploadSuccess, onUploadError }: UploadZon
     setIsDragging(false);
   };
 
+  const handleDragDropFile = async (file: File) => {
+    // Validate file type
+    const validTypes = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
+    if (!validTypes.includes(file.type)) {
+      onUploadError("Invalid file type. Please upload a JPEG, PNG, WEBP image or PDF.");
+      return;
+    }
+    setPendingFile(file);
+    setSelectedCurrency("auto");
+    setCustomCurrency("");
+    setShowCurrencyModal(true);
+  };
+
   const handleDrop = async (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
     
     const files = e.dataTransfer.files;
     if (files && files.length > 0) {
-      await processFile(files[0]);
+      await handleDragDropFile(files[0]);
     }
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length > 0) {
-      await processFile(files[0]);
+      await handleDragDropFile(files[0]);
     }
   };
 
@@ -45,7 +72,16 @@ export default function UploadZone({ onUploadSuccess, onUploadError }: UploadZon
     fileInputRef.current?.click();
   };
 
-  const processFile = async (file: File) => {
+  const handleStartProcessing = () => {
+    if (!pendingFile) return;
+    setShowCurrencyModal(false);
+    const currency = selectedCurrency === "custom" 
+      ? customCurrency.toUpperCase() 
+      : (selectedCurrency === "auto" ? undefined : selectedCurrency);
+    processFile(pendingFile, currency);
+  };
+
+  const processFile = async (file: File, currency?: string) => {
     // Validate file type
     const validTypes = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
     if (!validTypes.includes(file.type)) {
@@ -114,6 +150,7 @@ export default function UploadZone({ onUploadSuccess, onUploadError }: UploadZon
         body: JSON.stringify({
           object_key: object_key,
           file_hash: fileHash,
+          currency: currency,
         }),
       });
 
@@ -239,6 +276,77 @@ export default function UploadZone({ onUploadSuccess, onUploadError }: UploadZon
           )}
         </div>
       </div>
+
+      <Dialog open={showCurrencyModal} onOpenChange={setShowCurrencyModal}>
+        <DialogContent className="bg-card border-border text-foreground rounded-2xl max-w-sm p-6 shadow-2xl">
+          <DialogHeader className="space-y-1">
+            <DialogTitle className="text-lg font-bold">Specify Currency</DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground leading-relaxed">
+              If the receipt does not print a currency symbol, or you wish to override it, select a currency below.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-3">
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                { value: "auto", label: "Auto-detect" },
+                { value: "USD", label: "USD ($)" },
+                { value: "INR", label: "INR (₹)" },
+                { value: "EUR", label: "EUR (€)" },
+                { value: "GBP", label: "GBP (£)" },
+                { value: "custom", label: "Other..." },
+              ].map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setSelectedCurrency(opt.value)}
+                  className={`px-3 py-2.5 rounded-xl border text-xs font-bold transition duration-200 text-center ${
+                    selectedCurrency === opt.value
+                      ? "border-primary bg-primary/10 text-primary shadow-[0_0_12px_rgba(26,86,219,0.1)]"
+                      : "border-border bg-card hover:bg-muted/40 hover:border-muted-foreground/30"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+
+            {selectedCurrency === "custom" && (
+              <div className="space-y-1.5 animate-fade-in">
+                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                  3-Letter Code (e.g. CAD, JPY)
+                </label>
+                <input
+                  type="text"
+                  maxLength={3}
+                  value={customCurrency}
+                  onChange={(e) => setCustomCurrency(e.target.value.substring(0, 3))}
+                  className="w-full bg-muted border border-border rounded-xl px-3 py-2 text-xs font-bold uppercase focus:outline-none focus:border-primary text-foreground"
+                  placeholder="JPY"
+                />
+              </div>
+            )}
+          </div>
+
+          <DialogFooter className="mt-4 flex flex-row gap-2 justify-end">
+            <button
+              type="button"
+              onClick={() => setShowCurrencyModal(false)}
+              className="px-4 py-2 bg-secondary hover:bg-secondary/90 text-foreground rounded-xl text-xs font-bold transition"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={selectedCurrency === "custom" && customCurrency.length !== 3}
+              onClick={handleStartProcessing}
+              className="px-4 py-2 bg-primary hover:bg-primary/95 disabled:opacity-50 disabled:cursor-not-allowed text-primary-foreground rounded-xl text-xs font-bold shadow-md transition"
+            >
+              Start Parsing
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
