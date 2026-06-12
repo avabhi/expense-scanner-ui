@@ -1,11 +1,18 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { useCategoriesQuery } from "@/features/categories/hooks";
 import { CATEGORY_BUDGETS } from "@/features/categories/constants";
 import type { ReceiptRef } from "@/features/receipts/types";
 import AppLayout from "@/components/AppLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -60,6 +67,7 @@ const CATEGORY_CHART_COLORS: Record<string, string> = {
 export default function ReportsPage() {
   const { currencySymbol, formatAmount } = useCurrency();
   const { data: summaries = [], isLoading, error } = useCategoriesQuery();
+  const [range, setRange] = useState<string>("5");
 
   const receipts = useMemo(() => {
     const uniqueReceiptsMap: Record<string, ReceiptRef> = {};
@@ -151,32 +159,61 @@ export default function ReportsPage() {
       .sort((a, b) => (b.total_amount || 0) - (a.total_amount || 0));
   }, [receipts]);
 
-  // Trend Analysis Data (Using primary corporate blue)
-  const trendLabels = ["Week 1", "Week 2", "Week 3", "Week 4", "Week 5", "Week 6"];
-  const trendValues = [120, 340, 240, 560, 480, totalSpent || 1240];
-  const previousTrendValues = [90, 280, 210, 430, 410, 890];
+  // Compile timeline data for the trend chart using actual receipt data
+  const filteredChartReceipts = useMemo(() => {
+    let list = [...receipts]; // receipts is sorted newest to oldest
+    
+    if (range === "5") {
+      list = list.slice(0, 5);
+    } else if (range === "10") {
+      list = list.slice(0, 10);
+    } else if (range === "20") {
+      list = list.slice(0, 20);
+    } else if (range === "7d") {
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - 7);
+      list = list.filter((r) => r.date && new Date(r.date) >= cutoff);
+    } else if (range === "30d") {
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - 30);
+      list = list.filter((r) => r.date && new Date(r.date) >= cutoff);
+    }
+    
+    // Sort chronologically for plotting (oldest to newest, left-to-right)
+    return list.sort((a, b) => {
+      const dateA = a.date ? new Date(a.date).getTime() : 0;
+      const dateB = b.date ? new Date(b.date).getTime() : 0;
+      return dateA - dateB;
+    });
+  }, [receipts, range]);
+
+  const trendLabels = useMemo(() => {
+    return filteredChartReceipts.map((r) => {
+      const merchant = r.merchant_name || "Unknown Merchant";
+      const dateStr = r.date
+        ? new Date(r.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+        : "No Date";
+      return `${merchant} (${dateStr})`;
+    });
+  }, [filteredChartReceipts]);
+
+  const trendValues = useMemo(() => {
+    return filteredChartReceipts.map((r) => r.total_amount || 0);
+  }, [filteredChartReceipts]);
+
+  const hasChartData = trendValues.length > 0;
 
   const trendChartData: ChartData<"line"> = {
     labels: trendLabels,
     datasets: [
       {
         fill: true,
-        label: "Current Period",
+        label: "Spending Trends",
         data: trendValues,
         borderColor: "#1a56db", // Stitch primary blue
         backgroundColor: "rgba(26, 86, 219, 0.05)",
         tension: 0.35,
         pointBackgroundColor: "#1a56db",
-        pointBorderColor: "#ffffff",
-      },
-      {
-        fill: false,
-        label: "Previous Period",
-        data: previousTrendValues,
-        borderColor: "#94a3b8", // slate-400
-        borderDash: [5, 5],
-        tension: 0.35,
-        pointBackgroundColor: "#94a3b8",
         pointBorderColor: "#ffffff",
       },
     ],
@@ -293,15 +330,34 @@ export default function ReportsPage() {
                   <div>
                     <CardTitle className="text-base font-bold text-foreground">Trend Analysis</CardTitle>
                     <CardDescription className="text-muted-foreground text-xs">
-                      Comparison of spend metrics vs last month
+                      Overview of parsed receipt transactions over time
                     </CardDescription>
                   </div>
-                  <Badge className="bg-primary/10 hover:bg-primary/10 text-primary border-none font-bold text-[10px] py-1 px-2 rounded-full">
-                    +12.4% vs last period
-                  </Badge>
+                  <Select value={range} onValueChange={setRange}>
+                    <SelectTrigger size="sm" className="h-7 text-xs font-mono font-bold bg-background border-sidebar-border focus:ring-1 focus:ring-primary/20 w-fit shrink-0 cursor-pointer">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="5" className="text-xs cursor-pointer">Last 5 receipts</SelectItem>
+                      <SelectItem value="10" className="text-xs cursor-pointer">Last 10 receipts</SelectItem>
+                      <SelectItem value="20" className="text-xs cursor-pointer">Last 20 receipts</SelectItem>
+                      <SelectItem value="7d" className="text-xs cursor-pointer">Last 7 days</SelectItem>
+                      <SelectItem value="30d" className="text-xs cursor-pointer">Last 30 days</SelectItem>
+                      <SelectItem value="all" className="text-xs cursor-pointer">All receipts</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </CardHeader>
-                <CardContent className="h-[230px] pt-4">
-                  <Line data={trendChartData} options={trendOptions} />
+                <CardContent className="h-[230px] pt-4 flex items-center justify-center">
+                  {hasChartData ? (
+                    <div className="w-full h-full">
+                      <Line data={trendChartData} options={trendOptions} />
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <p className="text-xs text-muted-foreground font-semibold">No recent transactions scanned yet.</p>
+                      <p className="text-[10px] text-muted-foreground/60 mt-1">Upload a receipt to start seeing trends.</p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
@@ -335,7 +391,7 @@ export default function ReportsPage() {
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className="text-xs font-black text-foreground font-mono">${m.amount.toFixed(2)}</p>
+                          <p className="text-xs font-black text-foreground font-mono">{formatAmount(m.amount)}</p>
                           <Badge className="bg-primary/10 hover:bg-primary/10 text-primary border-none font-bold text-[9px] px-1.5 py-0.2 mt-0.5 rounded-full">
                             Verified
                           </Badge>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { useCurrency } from "@/components/CurrencyProvider";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -16,6 +16,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -93,11 +100,12 @@ export default function Dashboard() {
       });
     });
 
-    return Object.values(uniqueReceiptsMap).sort((a, b) => {
+    const list = Object.values(uniqueReceiptsMap).sort((a, b) => {
       const dateA = a.date ? new Date(a.date).getTime() : 0;
       const dateB = b.date ? new Date(b.date).getTime() : 0;
       return dateB - dateA;
     });
+    return list;
   }, [summaries]);
 
   const totalSpent = useMemo(
@@ -105,25 +113,51 @@ export default function Dashboard() {
     [summaries]
   );
 
+  const [range, setRange] = useState<string>("5");
+
   // Compile timeline data for the trend chart
-  const dateSpentMap: Record<string, number> = {};
-  receipts.forEach((r) => {
-    if (r.date && r.total_amount) {
-      const formattedDate = new Date(r.date).toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-      });
-      dateSpentMap[formattedDate] = (dateSpentMap[formattedDate] || 0) + r.total_amount;
+  const filteredChartReceipts = useMemo(() => {
+    let list = [...receipts]; // receipts is sorted newest to oldest
+    
+    if (range === "5") {
+      list = list.slice(0, 5);
+    } else if (range === "10") {
+      list = list.slice(0, 10);
+    } else if (range === "20") {
+      list = list.slice(0, 20);
+    } else if (range === "7d") {
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - 7);
+      list = list.filter((r) => r.date && new Date(r.date) >= cutoff);
+    } else if (range === "30d") {
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - 30);
+      list = list.filter((r) => r.date && new Date(r.date) >= cutoff);
     }
-  });
+    
+    // Sort chronologically for plotting (oldest to newest, left-to-right)
+    return list.sort((a, b) => {
+      const dateA = a.date ? new Date(a.date).getTime() : 0;
+      const dateB = b.date ? new Date(b.date).getTime() : 0;
+      return dateA - dateB;
+    });
+  }, [receipts, range]);
 
-  let chartLabels = Object.keys(dateSpentMap).reverse();
-  let chartValues = chartLabels.map((l) => dateSpentMap[l]);
+  const chartLabels = useMemo(() => {
+    return filteredChartReceipts.map((r) => {
+      const merchant = r.merchant_name || "Unknown Merchant";
+      const dateStr = r.date
+        ? new Date(r.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+        : "No Date";
+      return `${merchant} (${dateStr})`;
+    });
+  }, [filteredChartReceipts]);
 
-  if (chartLabels.length < 5) {
-    chartLabels = ["May 21", "May 22", "May 23", "May 24", "May 25", "May 26", "May 27"];
-    chartValues = [240, 120, 480, 290, 890, 450, totalSpent || 1240];
-  }
+  const chartValues = useMemo(() => {
+    return filteredChartReceipts.map((r) => r.total_amount || 0);
+  }, [filteredChartReceipts]);
+
+  const hasChartData = chartValues.length > 0;
 
   // Use the brand color from Stitch (#1a56db)
   const chartData: ChartData<"line"> = {
@@ -225,14 +259,38 @@ export default function Dashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Trend line */}
               <Card className="lg:col-span-2 bg-card border-border">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg font-bold text-foreground">Spending Trends</CardTitle>
-                  <CardDescription className="text-muted-foreground text-xs">
-                    Overview of parsed receipts transactions
-                  </CardDescription>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <div>
+                    <CardTitle className="text-lg font-bold text-foreground">Spending Trends</CardTitle>
+                    <CardDescription className="text-muted-foreground text-xs">
+                      Overview of parsed receipts transactions
+                    </CardDescription>
+                  </div>
+                  <Select value={range} onValueChange={setRange}>
+                    <SelectTrigger size="sm" className="h-7 text-xs font-mono font-bold bg-background border-sidebar-border focus:ring-1 focus:ring-primary/20 w-fit shrink-0 cursor-pointer">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="5" className="text-xs cursor-pointer">Last 5 receipts</SelectItem>
+                      <SelectItem value="10" className="text-xs cursor-pointer">Last 10 receipts</SelectItem>
+                      <SelectItem value="20" className="text-xs cursor-pointer">Last 20 receipts</SelectItem>
+                      <SelectItem value="7d" className="text-xs cursor-pointer">Last 7 days</SelectItem>
+                      <SelectItem value="30d" className="text-xs cursor-pointer">Last 30 days</SelectItem>
+                      <SelectItem value="all" className="text-xs cursor-pointer">All receipts</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </CardHeader>
-                <CardContent className="h-[220px] pt-4">
-                  <Line data={chartData} options={chartOptions} />
+                <CardContent className="h-[220px] pt-4 flex items-center justify-center">
+                  {hasChartData ? (
+                    <div className="w-full h-full">
+                      <Line data={chartData} options={chartOptions} />
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <p className="text-xs text-muted-foreground font-semibold">No recent transactions scanned yet.</p>
+                      <p className="text-[10px] text-muted-foreground/60 mt-1">Upload a receipt to start seeing trends.</p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
